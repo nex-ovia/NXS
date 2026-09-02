@@ -1,56 +1,264 @@
-
 # ==============================================================================
-# NXS Master Schema v0.1 - Software Domain Specification
-# Purpose: Formal structural definition for NXS Governance
+# NXS Universal Manifest Schema v1.0
+# Purpose: Structural specification for ANY project, outcome, agent, or setup
+# Scope: Software projects, business outcomes, agent configurations, deployments
 # ==============================================================================
 
 [nxs]
-version = "0.1.0"
-domain = "software"
-description = "Universal topology for high-impact software delivery in the AI era."
+version = "1.0.0"
+description = "Universal specification for resilient, reusable, autonomous, fast delivery"
 
-# ------------------------------------------------------------------------------
-# 1. TOPOLOGY SPECIFICATION (Functional Pillars)
-# ------------------------------------------------------------------------------
-[topology]
-governance = { label = "Governance", color = "#ffffff", order = 1, description = "Policies, Manifests, and SOPs" }
-orchestration = { label = "Orchestration", color = "#03a9f4", order = 2, description = "Control Logic, Agents, and Routing" }
-execution = { label = "Execution", color = "#8bc34a", order = 3, description = "Domain Logic, Workers, and Human Steps" }
-persistence = { label = "Persistence", color = "#ffc107", order = 4, description = "State Management and Data Storage" }
-surface = { label = "Surface", color = "#9c27b0", order = 5, description = "API Handlers, UIs, and External Gateways" }
+# ==============================================================================
+# PART 1: DECLARATION GATE (What problem are we solving?)
+# ==============================================================================
+[declaration]
+problem = "What problem does this solve?"
+scope_in = ["What is included?"]
+scope_out = ["What is explicitly excluded?"]
+success_criteria = "How will we know it is done?"
+dependencies_preliminary = ["What external things do we need?"]
 
-# ------------------------------------------------------------------------------
-# 2. NODE SCHEMA DEFINITION (Key Metadata)
-# This section tells the NX tools which keys are required in a project manifest.
-# ------------------------------------------------------------------------------
-[schema.node_keys]
-layer = { type = "enum", status = "mandatory", label = "Functional Layer", description = "Must match a key in [topology]" }
-type = { type = "enum", status = "mandatory", label = "Node Type", description = "Determines the functional identity of the node" }
-runtime = { type = "string", status = "mandatory", label = "Runtime Environment", description = "The engine executing the logic (e.g., rust-2024)" }
-path = { type = "path", status = "mandatory", label = "Physical Path", description = "Relative path to the source file or resource" }
-criticality = { type = "enum", status = "mandatory", label = "Risk Level", description = "Impact assessment of node failure" }
-dependencies = { type = "array", status = "optional", label = "Dependencies", description = "List of node IDs this node relies upon" }
+# ==============================================================================
+# PART 2: THE FOUR OUTCOMES (Why we are doing this)
+# ==============================================================================
+[outcomes]
 
-# ------------------------------------------------------------------------------
-# 3. ENUMERATION WHITELISTS
-# ------------------------------------------------------------------------------
-[constraints]
-allowed_types = ["manifest", "entrypoint", "logic", "agent", "manual", "adapter", "ui"]
-allowed_criticality = ["high", "medium", "low"]
+[outcomes.resilience]
+goal = "Project survives without original builder"
+metric = "handoff_time_minutes"
+target = 120
+test = "Someone else runs this from instructions alone"
 
-# Whitelist for Local-First/Sovereign compliance
-sovereign_runtimes = [
-    "rust-2021", "rust-2024", 
-    "python-3.11", "python-3.12", 
-    "node-20", "node-22", 
-    "docker-local", "human-in-loop"
+[outcomes.reusability]
+goal = "Same logic works across multiple contexts unchanged"
+metric = "contexts_deployed"
+target = 5
+test = "Deploy to 2+ new projects without modification"
+
+[outcomes.ownership]
+goal = "Never locked into any specific tool"
+metric = "tool_swap_time_minutes"
+target = 240
+test = "Swap underlying tool, logic unchanged"
+
+[outcomes.speed]
+goal = "Ship faster, iterate faster"
+metric_setup = "setup_time_minutes"
+target_setup = 5
+metric_iterate = "iteration_time_minutes"
+target_iterate = 10
+test = "Setup in one command, iterate without rebuilding"
+
+# ==============================================================================
+# PART 3: NODES (What are the components?)
+# Every component must be explicit and map to outcomes
+# ==============================================================================
+
+[[nodes]]
+id = "example_code"
+name = "Example Code Component"
+type = "code"
+layer = "execution"
+outcomes = ["resilience", "reusability"]
+runtime = "python-3.11"
+path = "src/core/logic.py"
+criticality = "high"
+dependencies = []
+
+[[nodes]]
+id = "example_agent"
+name = "Example Agent Component"
+type = "agent"
+layer = "orchestration"
+outcomes = ["ownership", "speed"]
+runtime = "llm"
+path = "agents/config.toml"
+criticality = "medium"
+dependencies = []
+
+# ==============================================================================
+# PART 4: THE FOUR RULES (How we build)
+# ==============================================================================
+[rules]
+
+[rules.rule_1]
+name = "Logic Separate from Tools"
+applies_to = ["code", "agent", "business_process"]
+requirement = "Core logic must not know or care what tool implements it"
+validation = "Can core logic be tested in isolation?"
+
+[rules.rule_2]
+name = "Configuration Never Hardcoded"
+applies_to = ["code", "config", "agent", "business_process"]
+requirement = "Every value that changes lives outside the component"
+validation = "Are all non-code values in external configuration?"
+
+[rules.rule_3]
+name = "Dependencies Visible"
+applies_to = ["all"]
+requirement = "Every dependency is explicit with version and reason"
+validation = "Can someone list all dependencies without guessing?"
+
+[rules.rule_4]
+name = "Runs Anywhere"
+applies_to = ["code", "agent", "business_process"]
+requirement = "Setup is automated; same on local, CI, production"
+validation = "Does setup work with one command?"
+
+# ==============================================================================
+# PART 5: INTEGRITY GATE (Is structure correct?)
+# ==============================================================================
+[integrity]
+checks = [
+  "Every node is accounted for",
+  "Every node maps to at least one outcome",
+  "Every node specifies runtime and path",
+  "No node has circular dependencies",
+  "Declaration gate completed for entire project",
+  "Structure matches Declaration",
+  "All dependencies documented with versions",
+  "Setup automation works without human help"
 ]
 
-# ------------------------------------------------------------------------------
-# 4. GOVERNANCE VALIDATION RULES
-# ------------------------------------------------------------------------------
+# ==============================================================================
+# PART 6: SOVEREIGNTY GATE (Are we locked in?)
+# ==============================================================================
+[sovereignty]
+checks = [
+  "Could we swap this nodes runtime in less than 4 hours?",
+  "Does the logic exist independent of the tool?",
+  "Could we move this project to a different host or cloud?",
+  "Is operational clarity documented?",
+  "Has handoff been tested with someone other than the builder?",
+  "Are all four outcomes being measured and tracked?",
+  "Could a new person understand this without the original author?"
+]
+
+# ==============================================================================
+# PART 7: UNIVERSAL NODE TYPES (What can this project contain?)
+# ==============================================================================
+[node_types]
+
+[node_types.code]
+description = "Executable software logic"
+examples = ["API server", "worker", "CLI tool", "library"]
+outcomes = ["resilience", "reusability", "ownership", "speed"]
+
+[node_types.agent]
+description = "Autonomous actor (LLM, decision engine, coordinator)"
+examples = ["Claude-based task handler", "scheduler", "router", "negotiator"]
+outcomes = ["reusability", "ownership", "speed"]
+
+[node_types.config]
+description = "External configuration (not in code)"
+examples = ["environment variables", "TOML files", "database connection strings"]
+outcomes = ["ownership", "speed"]
+
+[node_types.data]
+description = "Persistent state (database, file storage, cache)"
+examples = ["PostgreSQL table", "S3 bucket", "Redis cache"]
+outcomes = ["resilience", "reusability"]
+
+[node_types.decision]
+description = "Business decision or policy"
+examples = ["approval criteria", "routing logic", "escalation rule"]
+outcomes = ["ownership", "resilience"]
+
+[node_types.business_process]
+description = "Workflow involving people and systems"
+examples = ["onboarding flow", "incident response", "deployment procedure"]
+outcomes = ["resilience", "speed"]
+
+[node_types.documentation]
+description = "Runbooks, architecture, decision logs"
+examples = ["RUNBOOK.md", "DECISIONS.md", "API.md"]
+outcomes = ["resilience"]
+
+[node_types.manual_step]
+description = "Something a human does"
+examples = ["code review", "testing", "approval"]
+outcomes = ["resilience"]
+
+# ==============================================================================
+# PART 8: UNIVERSAL RUNTIMES (How does each node execute?)
+# ==============================================================================
+[runtimes]
+
+code_python = "Python 3.11 or 3.12"
+code_rust = "Rust 2024 edition"
+code_node = "Node.js 20 or 22"
+agent_llm = "Large Language Model"
+agent_local = "Local LLM via Ollama"
+agent_remote = "External API or service"
+execute_docker = "Docker container"
+execute_lambda = "AWS Lambda"
+execute_cloud_run = "Google Cloud Run"
+execute_human = "Requires human decision"
+execute_workflow = "Workflow orchestrator"
+execute_cron = "Scheduled job"
+storage_file = "File in repository"
+storage_env = "Environment variable"
+storage_database = "Database or data store"
+
+# ==============================================================================
+# PART 9: VALIDATION CHECKLIST
+# ==============================================================================
 [validation]
-require_contracts = true      # Every node MUST have a [contracts] table
-enforce_integrity = true      # Files on disk must match [path] in manifest
-strict_sovereignty = true     # Alerts if runtime is not in sovereign_runtimes
-prevent_layer_loops = true    # Disallows circular dependencies between layers
+
+every_node = [
+  "id",
+  "name",
+  "type",
+  "layer",
+  "runtime",
+  "path",
+  "criticality",
+  "outcomes"
+]
+
+project_must_have = [
+  "Declaration gate completed",
+  "At least one node per outcome",
+  "Integrity gate passed",
+  "Sovereignty gate passed",
+  "README.md",
+  "Setup automation",
+  "Dependencies documented"
+]
+
+before_shipping = [
+  "All seven Definition of Done boxes checked",
+  "Sovereignty gate verified",
+  "Handoff tested with real person",
+  "All four outcomes measurable",
+  "No circular dependencies",
+  "No unknown node types"
+]
+
+# ==============================================================================
+# PART 10: SCHEMA INTERPRETATION
+# ==============================================================================
+[interpretation]
+
+layers = [
+  "declaration = Planning and goal setting",
+  "governance = Policies and standards enforcement",
+  "execution = Business and domain logic",
+  "persistence = Data storage and state",
+  "orchestration = Coordination and routing",
+  "integration = External service connections",
+  "surface = User-facing APIs and interfaces"
+]
+
+criticality_means = [
+  "high = If this fails, the project fails",
+  "medium = If this fails, users notice issues",
+  "low = If this fails, nice-to-have features break"
+]
+
+outcome_focus = [
+  "resilience = Can someone else run this?",
+  "reusability = Can this work elsewhere unchanged?",
+  "ownership = Are we locked into specific tools?",
+  "speed = How fast can we ship and iterate?"
+]
