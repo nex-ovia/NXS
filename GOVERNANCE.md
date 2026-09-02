@@ -1,25 +1,30 @@
 # GOVERNANCE.md
-## The Nexovia Standard (NXS)
+## The Nexovia Standard (NXS) — Operational Playbook
 **Version:** 2.0
 **Maintained by:** Amit Srivastava
 **GitHub:** https://github.com/nex-ovia/NXS
 **License:** Apache 2.0
+**Read this with:** README.md (four business outcomes and rules)
 
 ---
 
 ## What This Document Is
 
-GOVERNANCE.md is the single source of truth for how work gets done
+GOVERNANCE.md is the single source of truth for HOW work gets done
 under the Nexovia Standard.
 
 It governs two things equally:
 
-How software gets built: the topology, schema, delivery gates, and
-compliance rules that ensure every solution is sovereign, portable, and owned.
+**How software gets built:** the topology, schema, delivery gates, and
+compliance rules that ensure every solution achieves the four outcomes
+(Resilience, Reusability, Ownership, Speed).
 
-How agents and humans think: the diagnostic framework, session rules,
+**How agents and humans think:** the diagnostic framework, session rules,
 drift detection, writing standards, and clarity support that ensure every
 session produces quality output regardless of who or what is doing the work.
+
+Read README.md first to understand the WHAT (outcomes and rules).
+Read GOVERNANCE.md to understand the HOW (execution and gates).
 
 Any agent, any human, any tool, any context. This document applies.
 When something is missing, add it here. Not elsewhere.
@@ -50,10 +55,23 @@ A plan with no measurable output is as incomplete as a function with no return v
 
 ---
 
-## Section 1 — The Four Rules
+## Quick Reference: The Four Outcomes (Read README.md for Full Details)
+
+Every rule, gate, and decision in this document exists to enable one or more of these outcomes:
+
+| Outcome | What It Means | How You Know You've Succeeded | Enabled By |
+|---------|---------------|--------|----------|
+| **Resilience** | Project survives original builder's departure | Handoff < 2 hours; system runs 1 week unchanged | Rules 3, 4; Declaration Gate |
+| **Reusability** | Same logic works in 5+ different contexts | Deployed to 2+ projects; adaptation < 2 hours | Rules 1, 2; Integrity Gate |
+| **Ownership** | Business is not locked into tools | Tool swap < 4 hours; fallback works automatically | Rules 1, 3; Sovereignty Gate |
+| **Speed** | Ship 40% faster; iterate 6x faster | Setup 5 min; iteration < 10 min; decisions reused | Rules 2, 4; All gates |
+
+---
 
 Every solution built under NXS follows these four rules.
-They are non-negotiable. Each one directly protects delivery sovereignty.
+They are non-negotiable. Each one directly protects delivery sovereignty and enables the four outcomes.
+
+**Quick Reference:** Read README.md for full rule explanations and outcome mapping.
 
 ### Rule 1: Logic is separate from tools
 
