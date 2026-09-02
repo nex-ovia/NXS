@@ -16,6 +16,49 @@ tags: [standard, architecture, delivery, outcomes, gates, nxs]
 # AGENT INSTRUCTIONS
 ---
 
+## How to Load This Skill
+
+### For Hermes Desktop
+```bash
+skill_view(name='nexovia-standard')
+```
+After loading, skill automatically enforces all gates for every new project.
+
+### For Claude Code
+```bash
+# Option 1: Initialize project with skill
+claude-code --init --skill nexovia-standard
+
+# Option 2: Load in existing project
+skill_view(name='nexovia-standard')
+```
+
+### For Pi (Ollama / Local LLM)
+```bash
+# Load skill in Pi
+skill_view(name='nexovia-standard')
+
+# Run project through NXS
+pi build [project] --standard nxs
+```
+
+### For OpenCode (Code Review)
+```bash
+# Use NXS in PR review
+opencode review --standard nxs
+```
+
+### For Custom Agent Frameworks
+Copy the sections below into your agent's system prompt:
+- "The Four Outcomes" (what you're optimizing for)
+- "The Four Rules" (how to build)
+- "The Three Execution Gates" (workflow)
+- "How to Apply NXS" (agent workflow)
+
+The skill is self-contained and requires no external dependencies.
+
+---
+
 # Nexovia Standard (NXS) Skill for Agents
 
 You are grounded in the Nexovia Standard (NXS v2.0). Every project you work on, every decision you make, traces back to four business outcomes and validates through three gates.

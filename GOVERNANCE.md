@@ -752,4 +752,203 @@ For Setup Automation:
 
 ---
 
+## PART 12: POLICY VERSIONING & EXTENSION
+
+### Current Policies (v2.0)
+
+NXS currently enforces 8 policies. When policies change, agents need to know.
+
+### How Policies Update
+
+**Version Flow:**
+1. **GitHub:** Edit policy in GOVERNANCE.md
+2. **Commit:** Push to https://github.com/nex-ovia/NXS
+3. **Tag:** Tag new version (e.g., v2.1.0 for new policy, v2.0.1 for fix)
+4. **Agents:** Auto-detect new version, use updated policy
+5. **Fallback:** If policy conflict, agents use most recent tagged version
+
+**Example: Policy Change**
+```
+Current: "Testing Requirements ≥70% coverage"
+Change:  "Testing Requirements ≥80% coverage"
+
+Step 1: Edit GOVERNANCE.md (Part 8, Policy 8)
+Step 2: git commit -m "policy: Increase testing requirement to 80%"
+Step 3: git tag v2.0.1
+Step 4: git push origin main --tags
+Step 5: Next project, agents check coverage against 80% (not 70%)
+```
+
+### How to Add a New Policy
+
+**Step 1: Define in GOVERNANCE.md**
+```
+Policy 9: [New Policy Name]
+  Violation: [Example of violation]
+  Fix: [How to fix]
+  Citation: [Which NXS doc explains this?]
+```
+
+**Step 2: Add Automated Check**
+In PART 8 (How Skills Enforce), add:
+```
+Policy 9 Check:
+  grep -r "[pattern]" [path]
+  [or] verify [artifact] exists
+  → FAIL if [condition]
+```
+
+**Step 3: Update Definition of Done**
+If policy affects Definition of Done (7 boxes), add checkbox
+
+**Step 4: Publish**
+```bash
+cd /tmp/NXS
+git add GOVERNANCE.md
+git commit -m "policy: Add Policy 9 - [Name]"
+git tag v2.1.0
+git push origin main --tags
+```
+
+**Step 5: Agents Auto-Detect**
+- New projects: Use Policy 9
+- Existing projects: Unaffected (use version when created)
+- Opt-in upgrade: `--nxs-version v2.1.0` flag
+
+### Policy Override (When Rare)
+
+If a specific project needs to override a policy:
+
+1. **Document Why**
+   Create `POLICY-OVERRIDE.md`:
+   ```markdown
+   Policy 3 Override: Configuration Management
+   Reason: Legacy system has hardcoded values, refactoring would take 3 weeks
+   Approved By: [Name], Date: [Date]
+   Expires: [Date after which override expires]
+   ```
+
+2. **Get Approval**
+   Sign-off from policy authority (e.g., tech lead)
+
+3. **Tag in Manifest**
+   ```toml
+   [compliance]
+   policy_3_override = "APPROVED"
+   override_reason = "POLICY-OVERRIDE.md"
+   override_expires = "2025-12-31"
+   ```
+
+4. **Log in Compliance**
+   TOML shows override + expiration date
+
+5. **Reevaluate**
+   Before expiration date, decide: fix or renew override
+
+---
+
+## PART 13: HOW TO EXTEND FOR NEW AGENT FRAMEWORKS
+
+### When New Tool Emerges (Example: OpenClaw)
+
+**Step 1: Add to nxs_schema.toml Runtimes**
+```toml
+[runtimes]
+agent_openclaw = "OpenClaw framework v1.0+"
+```
+
+**Step 2: Add Example Node in nxs_schema.toml**
+```toml
+[[nodes]]
+id = "openclaw_router"
+name = "OpenClaw Request Router"
+type = "agent"
+runtime = "openclaw"
+outcomes = ["speed", "reusability"]
+path = "agents/openclaw/router.toml"
+criticality = "high"
+```
+
+**Step 3: Update GOVERNANCE.md**
+Add new section:
+```
+## Using OpenClaw Agents
+
+**Runtime:** OpenClaw framework v1.0+
+
+**Gate 1 Requirement:** Specify if using OpenClaw
+```json
+{
+  "outcomes_mapped": ["speed"],
+  "primary_agent": "openclaw",
+  "fallback_agent": "ollama"
+}
+```
+
+**Gate 2 Requirement:** Verify OpenClaw config is external (not hardcoded)
+
+**Gate 3 Requirement:** 
+- Can we swap OpenClaw for Claude API? (< 4 hours?)
+- Can we swap OpenClaw for local Ollama? (< 4 hours?)
+
+**Fallback Strategy:** If OpenClaw unavailable → Use Ollama (define in manifest)
+```
+
+**Step 4: Update README.md**
+Add new section: "Using NXS with OpenClaw"
+```
+skill_view(name='nexovia-standard')
+openclaw build [project] --standard nxs
+```
+
+**Step 5: Publish**
+```bash
+git add nxs_schema.toml GOVERNANCE.md README.md
+git commit -m "feat: Add OpenClaw agent support"
+git tag v2.1.0
+git push origin main --tags
+```
+
+**Step 6: New Tools Can Integrate**
+When another tool wants to support NXS:
+```
+1. Read README.md (how to use with agents)
+2. Load SKILL.md (agent instructions)
+3. Implement three-gate workflow
+4. Enforce 8 policies
+5. Track compliance in TOML
+```
+
+---
+
+## PART 14: VERSION MANAGEMENT
+
+NXS follows semantic versioning.
+
+### Version Format: MAJOR.MINOR.PATCH
+
+- **MAJOR** (v3.0.0): Changes to core (outcomes or rules). Rare. Requires manual migration.
+- **MINOR** (v2.1.0): New policies, new node types, new runtimes. Agents can upgrade.
+- **PATCH** (v2.0.1): Bug fixes, clarifications, documentation. Automatic.
+
+### Agent Behavior
+
+Agents default to:
+- **Latest PATCH within configured MINOR:** Agent configured for v2.0 → Uses v2.0.7 (latest patch)
+- **Optional MINOR upgrade:** Policy update (v2.1) → Agent asks to upgrade
+- **Manual MAJOR upgrade:** Core change (v3.0) → Human review required
+
+### Backward Compatibility Promise
+
+**v2.x always accepts v1.x manifests:**
+```
+A v1.0 project created before agents existed still runs on v2.0.
+Features added in v2.x are optional (not required for v1.x projects).
+```
+
+**No breaking changes within major version:**
+If you build on v2.0, you can run on v2.10 without modification.
+
+---
+
 _This is the enforcement layer. Skills use this. Gates are binary (PASS/FAIL). No compromise._

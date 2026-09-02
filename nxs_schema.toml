@@ -262,3 +262,62 @@ outcome_focus = [
   "ownership = Are we locked into specific tools?",
   "speed = How fast can we ship and iterate?"
 ]
+
+# ==============================================================================
+# PART 11: HOW TO EXTEND SCHEMA FOR NEW TOOLS
+# ==============================================================================
+[extensions]
+
+[extensions.adding_runtime]
+instruction = "When a new agent framework or runtime emerges (e.g., OpenClaw)"
+example_openclaw = """
+# Add to [runtimes]:
+agent_openclaw = "OpenClaw framework v1.0+"
+"""
+where_to_add = "Under [runtimes] section"
+then_commit = "git commit -m 'feat: Add OpenClaw runtime support'"
+then_tag_release = "git tag v2.1.0"
+
+[extensions.adding_node_type]
+instruction = "When you need a new type of component not in the 8 types"
+example_quantum = """
+[node_types.quantum]
+description = "Quantum algorithm or process"
+examples = ["quantum_search", "quantum_factoring"]
+outcomes = ["speed", "resilience"]
+"""
+where_to_add = "Under [node_types] section"
+then_commit = "git commit -m 'feat: Add quantum node type'"
+then_tag_release = "git tag v2.1.0"
+
+[extensions.adding_layer]
+instruction = "When you need to describe system layers differently"
+example_add_layer = """
+# In [interpretation.layers], add:
+"quantum_processing = Quantum computation layer"
+"""
+where_to_add = "Under [interpretation.layers] array"
+then_commit = "git commit -m 'docs: Add quantum_processing layer'"
+then_tag_release = "git tag v2.0.1"
+
+[extensions.versioning_rules]
+rule_1 = "Schema changes go in TOML, commit to GitHub"
+rule_2 = "Tag semantic version: MAJOR.MINOR.PATCH"
+rule_3 = "PATCH (2.0.1): Bug fixes, documentation → Auto-detect"
+rule_4 = "MINOR (2.1.0): New features (runtime, policy, node type) → Ask to upgrade"
+rule_5 = "MAJOR (3.0.0): Core concept changes (outcomes/rules) → Manual migration"
+
+[extensions.backward_compatibility]
+promise = "v2.x always accepts v1.x manifests"
+meaning = "A v1.0 project built before agents existed still runs on v2.0"
+example = "If you built in v2.0, it runs unchanged on v2.1 and v2.10"
+breaking_change = "v3.0 would break v2.x (rare, only if core concepts change)"
+
+# ==============================================================================
+# PART 12: SCHEMA VERSION HISTORY
+# ==============================================================================
+[version_history]
+v1_0 = "Initial NXS specification (software projects only)"
+v2_0 = "Universal standard (software + business + agents)"
+v2_1 = "Future: New runtimes, new node types, new policies"
+v3_0 = "Future: Core concept changes (major rework)"
