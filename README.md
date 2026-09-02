@@ -1,4 +1,4 @@
-# The Nexovia Standard (NXS v2.0)
+# The Nexovia Standard
 
 **A delivery standard that makes solutions portable, reusable, and independent of any single person or tool.**
 
@@ -6,222 +6,198 @@
 
 ## What Is NXS?
 
-Good solutions are built **once**, reused **many times**, extended **without friction**, and maintained **without becoming a burden**.
+The Nexovia Standard (NXS) is a delivery standard grounded in the belief that good solutions are built once, reused many times, extended without friction, and maintained without becoming a burden.
 
-NXS defines what every finished solution must be true of, so that it can be:
-- Understood by anyone without reading code
-- Extended by anyone without breaking what works
-- Reused across projects without rebuilding
-- Maintained for years without the original builder
+It does not tell you what language to use, what tools to pick, or how to write your code. It defines what every finished solution must be true of, so that it can be understood by anyone, extended by anyone, packaged for reuse, and supported for the long term without depending on the person who originally built it.
 
-It doesn't tell you what language to use, what tools to pick, or how to write code. It tells you what "done" looks like.
+It works for any kind of project: an automation, an integration, a data pipeline, a web application, an AI-generated workflow, or a large-scale production platform.
+
+One standard. Any language. Any platform. Any team.
 
 ---
 
-## The Four Business Outcomes
+## The Four Outcomes You're Building For
 
-Every solution built to NXS achieves one or more of these outcomes:
+When you apply NXS, you're not following rules for their own sake. You're building toward measurable business outcomes. Each outcome has a test and a target.
 
-### 1. **Resilience** — Project survives without the original builder
-- New person understands the system in < 2 hours
-- System runs unchanged when builder is gone for weeks
-- All decisions are documented with clear rationale
+| Outcome | What It Means | How You Know | Target |
+|---------|--------------|-------------|--------|
+| **Resilience** | Project survives without the original builder | Handoff takes < 2 hours | Works first time, no rebuilding |
+| **Reusability** | Same logic works across 5+ contexts | Deploy unchanged to 2 new projects | No copy-paste, same binary |
+| **Ownership** | Never locked into any one tool | Swap tools in < 4 hours | Logic independent of platform |
+| **Speed** | Ship faster; iterate faster | Setup < 5 min, iterate < 10 min | 40% faster than baseline |
 
-**How you know:** Handoff takes < 2 hours, no tribal knowledge needed
-
-### 2. **Reusability** — Same logic works in 5+ different contexts
-- Business logic doesn't assume one specific environment or tool
-- Same code runs in Project A, B, C with only configuration differing
-- Reuse takes hours, not weeks
-
-**How you know:** Deploy to 2+ projects unchanged; adaptation < 2 hours
-
-### 3. **Ownership** — Business is never locked into tools
-- Swapping tools (Claude → OpenCode) takes < 4 hours with no logic rewrite
-- If a tool disappears, you can move to an alternative automatically
-- Fallback chains exist so primary tool failure doesn't break everything
-
-**How you know:** Tool swap < 4 hours; fallbacks work automatically
-
-### 4. **Speed** — Ship 40% faster; iterate 6x faster
-- New device setup takes 5 minutes, not 2 hours (automation, not manuals)
-- Changing a parameter takes < 10 minutes (change → test → deploy)
-- Decisions are reused, not remade every project
-- Time waste is visible and tracked
-
-**How you know:** Setup 5 min, iteration < 10 min, decisions reused across projects
+You can measure all four. That's the point.
 
 ---
 
 ## The Four Rules
 
-Every NXS solution follows these non-negotiable rules:
+These rules make those outcomes possible. Follow them.
 
-### Rule 1: Logic Separate From Tools
-The business logic (decisions, rules, algorithms) must be independent of the tools used to deliver it.
+**Rule 1: Logic Separate from Tools**
 
-If your database changes or your platform is replaced, the logic stays the same. Only the connection changes.
+Your business logic should not know or care what tool implements it. Not the language, not the database, not the cloud provider. The logic should be testable in isolation.
 
-**Example:**
-```
-✗ WRONG: "Use Claude Code to orchestrate agents"
-✓ RIGHT: "When primary agent fails, use fallback agent. Claude Code is one option; OpenCode is another."
-```
+How to do it:
+- Core logic lives in its own module/package
+- All tool-specific code at the boundary
+- Dependencies flow inward, not outward
 
-### Rule 2: Configuration Never Hardcoded
-Every value that changes between environments (API keys, URLs, timeouts, feature flags) must live outside the code.
+**Rule 2: Configuration Never Hardcoded**
 
-Same solution runs locally, in staging, in production — no modifications needed.
+Every time you hardcode a value, you've made your solution brittle. Move it to configuration that can change without rebuilding.
 
-**Example:**
-```
-✗ WRONG: API_URL = "https://prod.myvendor.com/v1"
-✓ RIGHT: API_URL = os.getenv("VENDOR_API_URL")
-```
+How to do it:
+- Use environment variables, files, or config management
+- List all configuration in a single place
+- That list lives in version control, not in code comments
 
-### Rule 3: Every External Dependency Is Visible
-Document every service, tool, API, database, or platform your solution depends on.
+**Rule 3: Every Dependency Visible**
 
-Document: what it is, why it's there, what it provides, what would change if replaced.
+You can't deploy, secure, or understand something if you don't know what it depends on. Make it explicit.
 
-**Example:**
-```
-✗ WRONG: Solution silently depends on Ollama; nobody knows until it breaks
-✓ RIGHT: [Dependencies] section lists: Ollama (local LLM), Claude API (cloud fallback), PostgreSQL (state)
-```
+How to do it:
+- Document all dependencies (libraries, services, APIs, credentials)
+- Include versions
+- For each, state why it's there and what it would take to replace it
 
-### Rule 4: Runs Anywhere, For Anyone
-New person on any machine can run your solution by following only what's written down.
+**Rule 4: Runs Anywhere, for Anyone**
 
-No tribal knowledge. No "magic" setup steps. No local-only files.
+If setup takes 3 days or only you can run it, you've lost the game. It should work the same way on your machine, on CI, and in production.
+
+How to do it:
+- Automate setup completely (scripts that work, not instructions)
+- One command to build, test, run
+- No "just this one time, set this environment variable"
 
 ---
 
-## Definition of Done (7 Checkboxes)
+## Definition of Done
 
-A solution is complete when all of these are true:
+Before you ship, check these seven boxes. All seven.
 
-- [ ] **Purpose documented** — Anyone can read what this does and why, without reading code
-- [ ] **Logic identifiable** — Business rules live somewhere clear, readable, and separate from tools
-- [ ] **Dependencies listed** — Every external system is named with its purpose documented
-- [ ] **Configuration externalised** — Nothing environment-specific is hardcoded
-- [ ] **Runs anywhere** — New person can run it on any machine by following written steps
-- [ ] **Health verifiable** — Defined way to confirm the solution is running correctly
-- [ ] **Stable under load** — Tested to work correctly at expected real-world volume
+- [ ] Logic works in isolation (no tool dependencies)
+- [ ] Configuration is external and documented
+- [ ] All dependencies are explicit (with versions and reasons)
+- [ ] Setup is automated (one command)
+- [ ] Runs the same way locally and in production
+- [ ] Code is understandable without the original author present
+- [ ] Handoff instructions are tested (someone else followed them and it worked)
+
+---
+
+## The Three Execution Gates
+
+These gates prevent you from shipping things you regret.
+
+**Gate 1: Declaration (Before You Code)**
+
+Write down:
+- What problem are you solving?
+- What's in scope, what's not?
+- How will you know it's done?
+- What dependencies will you have? (early)
+
+Spend 30 minutes. Write it down. This saves weeks.
+
+**Gate 2: Integrity (After You Build)**
+
+Check:
+- Is the structure as declared? (code matches plan)
+- Do all the dependencies match what you said?
+- Can someone else run this with no help?
+- Does the definition of done pass?
+
+This is not "did it work" — this is "is it shape correct."
+
+**Gate 3: Sovereignty (Before You Ship)**
+
+Confirm:
+- No lock-in (could we swap tools if we needed to?)
+- Operational clarity (who runs this, how do they do it?)
+- Handoff is real (did someone actually follow the setup instructions?)
+- Metrics are wired (can we measure the outcomes?)
 
 ---
 
 ## How to Measure Success
 
-Use these four metrics to measure whether your solution achieves NXS outcomes:
+Track these metrics over time. Watch them improve.
 
-| Metric | What It Measures | Target | Outcome |
-|--------|------------------|--------|---------|
-| **Time to Understand** | How long new person takes to grasp an unfamiliar solution | < 2 hours | Resilience |
-| **Dependency Swap Time** | How long to replace one tool/vendor with another | < 4 hours | Ownership |
-| **Time to First Version** | Speed from brief to working, deployable solution | 40% faster than baseline | Speed |
-| **Maintenance Overhead** | Hours per week on fixes, firefighting, support | < 10% of team time | Speed + Resilience |
-
----
-
-## The Three Governance Gates
-
-All must pass before implementation starts:
-
-### Gate 1: Declaration Gate
-Intent must be defined in the project manifest before code starts.
-- Question: Is it clear what we're building and why?
-- Answer: Yes → proceed; No → define it first
-
-### Gate 2: Integrity Gate
-Physical project structure must match what's declared.
-- Question: Does the code match the plan?
-- Answer: Yes → proceed; No → align them
-
-### Gate 3: Sovereignty Gate
-All dependencies are audited; no hidden lock-in.
-- Question: Can we survive if a vendor disappears?
-- Answer: Yes → proceed; No → add fallbacks
+| Metric | What It Tells You | How to Measure |
+|--------|------------------|-----------------|
+| **Time to Understand** | Is the code discoverable? | New developer reads it, can describe what it does (< 2 hours) |
+| **Time to Modify** | Is it extensible? | Add a feature without touching core logic (< 4 hours) |
+| **Time to Swap Tools** | Is it independent? | Replace implementation with different tool (< 4 hours) |
+| **Maintenance Overhead** | Is it sustainable? | Hours per month to keep running / total lines of code (trending down) |
 
 ---
 
-## NXS Is NOT
+## How to Use NXS
 
-**Not a language/framework choice.** Python, Rust, JavaScript, no-code tools — all can follow NXS.
+**If you're a developer:** Read this README. Then read GOVERNANCE.md (20-30 min). Then create a `project_manifest.toml` using MANIFEST-SPEC.md as your template. Then build to the four rules.
 
-**Not a constraint on creativity.** NXS defines the structure; what you build inside it is yours.
+**If you're leading a project:** Read the "Four Outcomes" section above. You now have your accountability framework. Ask your team: can we measure these?
 
-**Not a compliance exercise.** Every rule exists to protect your business ownership of what was built.
+**If you're setting up AI tools:** Use the system prompt at the bottom of this file. Copy it into your tool settings.
 
-**Not a library.** There's nothing to install. NXS is applied to projects, not added as a dependency.
-
----
-
-## How to Use This Standard
-
-### For Leaders
-Read: "The Four Business Outcomes" and "How to Measure Success"  
-Action: Measure your projects against the four metrics  
-Time: 5 minutes
-
-### For Developers
-Read: Full page + GOVERNANCE.md (operational details)  
-Action: Follow the four rules + Definition of Done checklist  
-Time: 2 hours to understand; apply ongoing
-
-### For AI Tools/Agents
-Read: SYSTEM-PROMPT.md  
-Action: Copy to your AI tool settings; applies to every session  
-Time: 5 minutes
-
-### For New Team Members
-Read: QUICK-START.md (5-minute summary)  
-Action: Use INDEX.md when you need specifics  
-Time: 5 minutes to get productive; 30 minutes to understand fully
+**If you're new to the standard:** Start with "The Four Rules" above. They're the whole thing.
 
 ---
 
-## Related Files
+## The System Prompt (for AI Tools)
 
-- **GOVERNANCE.md** — Operational details: how to execute NXS, session discipline, gates
-- **SYSTEM-PROMPT.md** — AI system prompt; copy to your AI tool
-- **QUICK-START.md** — 5-minute summary with visual tables
-- **INDEX.md** — Navigation guide; find what you need
-- **MANIFEST-SPEC.md** — Project structure template
-- **ARCHITECTURE.md** — How all documentation fits together
+Copy this into Claude, ChatGPT, or any AI tool you use:
 
----
+```
+You are a code architect grounded in the Nexovia Standard (NXS).
 
-## Core Principle: Delivery Sovereignty
+When I ask you to build something, reason about it in terms of four outcomes:
+1. Resilience: Will this survive without the original builder? (handoff time < 2 hours)
+2. Reusability: Could this logic work in 5+ contexts unchanged?
+3. Ownership: Is this independent of any specific tool? (tool swap < 4 hours)
+4. Speed: Can we set this up in < 5 minutes? Iterate in < 10?
 
-Delivery sovereignty means the team that commissions a solution retains full understanding, control, and portability forever.
+When you write code, follow these rules:
+- Rule 1: Logic separate from tools (core logic testable in isolation)
+- Rule 2: Configuration never hardcoded (all config in one place)
+- Rule 3: Every dependency visible (documented with versions and reasons)
+- Rule 4: Runs anywhere (automated setup, same on local/CI/prod)
 
-A sovereign solution can be:
-- **Understood** without reading code
-- **Reused** without rebuilding
-- **Extended** without breaking things
-- **Packaged** as a reusable module
-- **Maintained** without depending on the original builder
+Before shipping, verify the seven Definition of Done checkboxes.
 
-If a solution can't do all five, it hasn't truly been built — it's been assembled for one moment in time.
+Before you start, ask me what problem we're solving, what's in scope, and how we'll know it's done (Gate 1: Declaration).
 
----
+After you build, remind me to check that structure matches plan, dependencies are explicit, setup is automated, and someone else can run it (Gate 2: Integrity).
 
-## Versioning
-
-**NXS v2.0** is the current version.
-
-v2.0 is fully backward compatible with v1.0. Existing projects don't need changes; they remain compliant.
+Before we ship, confirm no lock-in, operational clarity, handoff is real, and metrics are wired (Gate 3: Sovereignty).
+```
 
 ---
 
-## Quick Links
+## Why This Matters
 
-- **Main Repository:** https://github.com/nex-ovia/NXS
-- **For Details:** GOVERNANCE.md
-- **For Quick Summary:** QUICK-START.md
-- **For Navigation:** INDEX.md
+Most solutions die when the original builder leaves or when requirements change. Not because the code is bad. Because nobody else can understand it, modify it, or move it.
+
+NXS fixes that by making the rules explicit and measurable. It's not about process. It's about building things that last.
 
 ---
 
-_The Nexovia Standard: because a solution built once should work, grow, and last._
+## Questions
+
+**Q: Does NXS dictate language or tools?**  
+A: No. Use Python or Go or Rust. Use PostgreSQL or DynamoDB or SQLite. The standard applies to any choice.
+
+**Q: Can we apply this to existing projects?**  
+A: Yes. If a project already separates logic from tools, externalizes config, and documents dependencies, it's already mostly compliant. Start with the Declaration gate and work forward.
+
+**Q: What if we don't measure outcomes?**  
+A: You can follow the rules and ship. But you won't know if they're working. The outcomes are how you tune the standard to your context.
+
+**Q: Does this slow us down?**  
+A: The first few times, yes (30 min Declaration gate, slightly more careful code). After that, you'll ship faster because less breaks and less needs rewritten.
+
+---
+
+_The Nexovia Standard v2.0. Built once. Reused many times. Extended without friction. Maintained without burden._

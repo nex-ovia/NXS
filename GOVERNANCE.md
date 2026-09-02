@@ -1,245 +1,413 @@
 # GOVERNANCE.md — How to Execute NXS
 
-**For:** Teams implementing NXS; need clear operational details  
-**See also:** README.md (philosophy and rules)
+This guide tells you how to actually build to the Nexovia Standard. Use it alongside README.md.
 
 ---
 
-## The Three Governance Gates
+## Before You Start: Gate 1 — Declaration
 
-Every project must pass these gates before implementation starts.
+Spend 30 minutes writing this down. Not in your head. Written.
 
-### Gate 1: Declaration Gate
-**Before** you write any code, declare your intent in a manifest.
+**Create a file called `project_declaration.md` in your repo root:**
 
-- [ ] Is the problem clear?
-- [ ] Is the solution approach documented?
-- [ ] Do all stakeholders agree on what we're building?
+```markdown
+# Project Declaration
 
-If NO: Define it first.  
-If YES: Proceed to Gate 2.
+## What problem are we solving?
+[One clear sentence. Not "improve systems" — be specific.]
 
-### Gate 2: Integrity Gate
-**After** you've built it, verify the physical project matches your declaration.
+## What's in scope?
+- 
+- 
 
-- [ ] Does the actual project structure match the manifest?
-- [ ] Are there files/components not in the manifest?
-- [ ] Are there manifest items not in the actual code?
+## What's out of scope?
+- 
+- 
 
-If NO: Align them.  
-If YES: Proceed to Gate 3.
+## How will we know it's done?
+[The definition of done checklist — what needs to be true before we ship?]
 
-### Gate 3: Sovereignty Gate
-**Before** shipping, audit dependencies and ensure no lock-in.
+## Dependencies (preliminary)
+- [Database choice and why]
+- [External APIs and why]
+- [Languages/frameworks and why]
+- [Infrastructure and why]
 
-- [ ] Is every external dependency listed?
-- [ ] Does a fallback exist if the primary tool fails?
-- [ ] Can we survive if a vendor disappears?
+## Handoff target
+[Who will need to run this? Describe them.]
+```
 
-If NO: Add fallbacks or exit strategy.  
-If YES: Ready to ship.
-
----
-
-## Project Structure
-
-Use this topology to organize your project:
-
-### Five Layers
-- **Governance:** Manifests, policies, decisions (top-level)
-- **Orchestration:** Entry points, routers, how things connect
-- **Execution:** Business logic, actual work
-- **Persistence:** Databases, state, memory
-- **Surface:** APIs, UIs, external interfaces
-
-### Node Types
-- **manifest** → Your project declaration (project_manifest.toml)
-- **logic** → Business rules and algorithms
-- **entrypoint** → Where execution starts
-- **agent** → AI or automated agents
-- **adapter** → Connections to external systems
-- **ui** → User interfaces
-- **manual** → Human steps
-
-### Node Properties
-Every node should have:
-- **layer** → Which of the 5 layers
-- **type** → What kind of node (logic, adapter, etc.)
-- **path** → Where it lives (file or documentation)
-- **dependencies** → What it depends on
-- **criticality** → high/medium/low
+Stop here. Get agreement. Then code.
 
 ---
 
-## Project Manifest Template
+## Rule 1: Logic Separate from Tools
 
-Create a `project_manifest.toml` in your project root:
+Your business logic is the part that solves the actual problem. Everything else is just plumbing.
+
+**Here's what separation looks like:**
+
+```
+/project
+  /core                    ← Business logic (testable, tool-agnostic)
+    logic.py
+    models.py
+    handlers.py
+  /infrastructure          ← Tool-specific code
+    database.py
+    api.py
+    config.py
+```
+
+**Test your core logic without any tools:**
+
+```python
+# In /core/logic.py — no imports from /infrastructure
+def calculate_recommendation(user_history, context):
+    return apply_algorithm(user_history, context)
+
+# Test it standalone
+assert calculate_recommendation([1,2,3], "context") == expected
+```
+
+**The /infrastructure layer wires tools to core logic:**
+
+```python
+# In /infrastructure/database.py
+from core.logic import calculate_recommendation
+
+def get_recommendation(user_id):
+    history = db.query(user_id)
+    context = cache.get('context')
+    result = calculate_recommendation(history, context)  # Call core logic
+    return result
+```
+
+**Why this matters:** You can test core logic without standing up a database. You can replace your database later without rewriting logic.
+
+---
+
+## Rule 2: Configuration Never Hardcoded
+
+If it's a string that changes between environments, it goes in configuration.
+
+**Create one configuration file:**
 
 ```toml
-[project]
-name = "your-project-name"
-version = "0.1.0"
-standard = "https://github.com/nex-ovia/NXS"
-nxs_version = "2.0"
+# config.toml (or .env, or config.yaml — pick one)
 
-[governance]
-purpose = "What this project does in one sentence"
-completion_criteria = "How we know this is done"
+[database]
+host = "${DB_HOST}"          # From environment
+port = "${DB_PORT}"
+name = "myapp_prod"           # Can differ per env
 
-# Node 1: Entry point
-[[nodes]]
-id = "main"
-layer = "orchestration"
-type = "entrypoint"
-path = "src/main.py"
-criticality = "high"
-description = "Where execution starts"
+[api]
+timeout = 30                  # Value, never hardcoded in code
+retries = 3
 
-# Node 2: Core logic
-[[nodes]]
-id = "business-logic"
-layer = "execution"
-type = "logic"
-path = "src/logic.py"
-criticality = "high"
-dependencies = []
-description = "The core business rules"
-
-# Add more nodes as needed...
+[feature_flags]
+new_algorithm = true          # Can be toggled without code change
+debug_logging = false
 ```
+
+**In your code, read it once at startup:**
+
+```python
+import config
+
+def main():
+    db_host = config.database.host
+    timeout = config.api.timeout
+    # Use it
+```
+
+**Your `config.toml` file goes in version control. Your `.env` file (with secrets) does not.**
+
+Document what each setting does:
+
+```toml
+# DATABASE
+# The host and port of your database.
+# Can be overridden by DB_HOST and DB_PORT environment variables.
+# If not set, defaults to localhost:5432
+host = "${DB_HOST:localhost}"
+```
+
+**Why this matters:** You can deploy the same binary to staging and production by changing configuration, not code.
 
 ---
 
-## Definition of Done Checklist
+## Rule 3: Every Dependency Visible
 
-Before shipping, verify:
+Create a single file that lists everything your project depends on.
 
-- [ ] Purpose is documented (anyone can read what it does)
-- [ ] Logic is identifiable (business rules are clear)
-- [ ] Dependencies are listed (every external service is named)
-- [ ] Configuration is externalized (nothing hardcoded)
-- [ ] It runs anywhere (new person can run it without asking)
-- [ ] Health is verifiable (way to confirm it's working)
-- [ ] It's stable under load (tested at real volume)
+**Create `DEPENDENCIES.md`:**
 
----
+```markdown
+# Project Dependencies
 
-## Metrics to Track
-
-Measure your project against these:
-
-| Metric | Measures | Target |
-|--------|----------|--------|
-| **Time to Understand** | How long for new person to grasp it | < 2 hours |
-| **Dependency Swap Time** | How long to replace one tool | < 4 hours |
-| **Time to First Version** | Speed from idea to working solution | 40% faster than baseline |
-| **Maintenance Overhead** | Time spent on fixes/support per week | < 10% of team time |
-
----
-
-## Common Patterns
-
-### Fallback Chain (For Resilience & Ownership)
-```
-When primary_tool fails:
-  → Try fallback_tool
-  → If fallback fails:
-    → Try another_fallback
-    → If all fail:
-      → Alert operator, stop and wait
-```
-
-### Configuration Externalization (For Speed & Reusability)
-```
-Do NOT:
-  TIMEOUT = 30
-  API_KEY = "secret123"
+## Required
+- Python 3.11+
+  - Why: Async context managers
+  - How to replace: Python 3.10 with compatibility shim, or rewrite async code
   
-Do:
-  TIMEOUT = os.getenv("SERVICE_TIMEOUT", "30")
-  API_KEY = os.getenv("API_KEY")
+## External Services
+- PostgreSQL 13+
+  - Why: Main data store
+  - How to replace: Swap database layer (< 4 hours, core logic unchanged)
+  - When to upgrade: When support ends (2026)
+
+- Redis
+  - Why: Caching user sessions
+  - How to replace: In-memory cache + database (performance hit, but possible)
+  
+## Libraries (Python)
+- fastapi==0.104.1
+  - Why: HTTP server, modern async
+  - How to replace: Switch to Flask (API layer only, 2-3 hours)
+  
+- sqlalchemy==2.0.0
+  - Why: Database ORM
+  - How to replace: Raw SQL queries (tedious, but possible)
+
+- pydantic==2.0
+  - Why: Data validation
+  - How to replace: Manual validation (slow to write, easy to break)
+
+## CI/CD
+- GitHub Actions
+  - Why: Free for public repos, integrates with GitHub
+  - How to replace: GitLab CI or Jenkins (CI config only)
+
+- Docker
+  - Why: Reproducible environments
+  - How to replace: Manual server setup (not recommended; very fragile)
+
+## Threat: What could break us?
+- PostgreSQL goes away → Very unlikely, but rewrite would take 2 weeks
+- Redis becomes paid → We could go in-memory tomorrow
+- fastapi unmaintained → Switch to Flask or Django (infrastructure layer only)
 ```
 
-### Dependency Documentation (For Ownership & Resilience)
-```
-[dependencies]
-- PostgreSQL (stores state; could migrate to MySQL)
-- Redis (caching; could replace with local cache)
-- Claude API (primary agent; fallback to Ollama)
-```
+**Why this matters:** When someone asks "can we replace this?", you already know the answer and how long it takes.
 
 ---
 
-## Session Discipline (For Teams & AI Tools)
+## Rule 4: Runs Anywhere, for Anyone
 
-When working on this project:
+Setup should be one command. Not three commands, not "just run these manual steps first." One command.
 
-### Before Starting
-1. **Clarify the goal:** What are we doing?
-2. **Define success:** How will we know it's done?
-3. **Check gates:** Do we pass Declaration Gate?
+**Create a setup script:**
 
-### During
-1. **Stay focused:** If scope changes, acknowledge it
-2. **Document as you go:** Don't wait until the end
-3. **Check progress:** Are we moving toward the goal?
+```bash
+#!/bin/bash
+# setup.sh
 
-### After
-1. **Verify completion:** Did we meet success criteria?
-2. **Check gates:** Do we pass Integrity & Sovereignty Gates?
-3. **Update manifest:** Record any decisions made
+set -e
 
----
+echo "Setting up NXS example project..."
 
-## Decision Log
+# Check dependencies
+if ! command -v python3 &> /dev/null; then
+    echo "❌ Python 3 not found"
+    exit 1
+fi
 
-Document major decisions with:
-- **What:** The decision
-- **Why:** Rationale and context
-- **When:** Date
-- **Impact:** What changes as a result
+if ! command -v docker &> /dev/null; then
+    echo "❌ Docker not found"
+    exit 1
+fi
 
-Example:
+# Install Python dependencies
+pip install -r requirements.txt
+
+# Start Docker services
+docker-compose up -d
+
+# Wait for services to be ready
+sleep 5
+
+# Initialize database
+python scripts/init_db.py
+
+echo "✅ Setup complete"
+echo "Run: python main.py"
 ```
-Decision: Use Claude API as primary agent
-Date: 2026-09-01
-Why: Speed critical; accuracy important; internet connectivity guaranteed
-Fallback: OpenCode (fewer features, works in more environments)
-Impact: Setup requires ANTHROPIC_API_KEY
+
+**Now setup is:**
+
+```bash
+$ ./setup.sh
 ```
 
----
+**Not:**
 
-## When Things Go Wrong
+```
+1. Install Docker
+2. Install Python
+3. pip install -r requirements.txt
+4. Run docker-compose up -d
+5. Wait 30 seconds
+6. python scripts/init_db.py
+7. If that fails, check that Redis is running
+```
 
-### Project fails a gate
-**Declaration Gate:** Declare intent before proceeding  
-**Integrity Gate:** Align code with manifest  
-**Sovereignty Gate:** Add fallbacks or document risk  
-
-### Stakeholders disagree
-Go back to the manifest. The manifest is the source of truth.
-
-### Requirements change mid-project
-Document the change in the manifest. Re-run gates if scope is big.
-
-### You discover something critical late
-Stop, update the manifest, re-run gates, then proceed.
+**Why this matters:** New developer runs one command. It works. They're productive in minutes, not hours.
 
 ---
 
-## Key Principles
+## After You Build: Gate 2 — Integrity
 
-**Manifest first, code second.** Always.
+Before you call it done, check these boxes:
 
-**Written down beats tribal knowledge.** Always.
+**Structure Check:**
+- [ ] Core logic has no tool imports (python: no db, no HTTP, no file I/O)
+- [ ] Configuration is external (all values in config file or env vars)
+- [ ] Dependencies are documented (DEPENDENCIES.md exists and is complete)
+- [ ] Setup is automated (one command that works)
 
-**Gates are checkpoints, not obstacles.** They save time by preventing rework.
+**Code Check:**
+- [ ] Logic is testable in isolation (test core without tools)
+- [ ] Error handling is explicit (failures are named, not silent)
+- [ ] Logging tells the story (can I follow what happened from logs alone?)
 
-**Decisions matter more than code.** Document decisions; code is implementation.
-
-**Simpler is better.** If it's hard to explain, it's too complex.
+**Operations Check:**
+- [ ] Can someone else run this? (Actually let them, unsupervised)
+- [ ] Does it fail gracefully? (Errors are clear, not mysterious)
+- [ ] Can you see what's happening? (Metrics, logs, health checks)
 
 ---
 
-_Read README.md for the philosophy. Use this for the how-to._
+## Before You Ship: Gate 3 — Sovereignty
+
+This gate confirms you're not locked in.
+
+**Lock-in check:**
+- [ ] Could we swap the database? (1-2 days of work max)
+- [ ] Could we move to different cloud? (Infrastructure layer changes, logic untouched)
+- [ ] Could we rewrite in a different language? (Logic is independent, just rewrite infrastructure)
+
+**If you answer "no" or "weeks of work," you have a lock-in problem. Go fix it before shipping.**
+
+**Operational clarity:**
+- [ ] Who runs this in production? (Name them)
+- [ ] How do they run it? (Step by step in RUNBOOK.md)
+- [ ] What could go wrong? (List it. How would they fix it?)
+
+**Handoff is real:**
+- [ ] Did someone who didn't build this actually run the setup script? (Not "I ran it and it worked." Actually let them do it.)
+- [ ] Did they understand the code? (Ask them to describe one piece)
+
+**Metrics wired:**
+- [ ] Can you see each outcome? (Time to handoff? Deployment time? Error rates?)
+- [ ] Is it tracked somewhere? (Dashboard, monitoring, or spreadsheet — somewhere)
+
+---
+
+## Common Pattern: External Dependencies
+
+When your code needs to call external services, use a pattern like this:
+
+```python
+# /core/logic.py — This doesn't know or care about external services
+def recommend_product(user_history):
+    # Pure logic, testable without anything external
+    return algorithm(user_history)
+
+# /infrastructure/api_client.py — External service isolation
+class ExternalRecommendationAPI:
+    def __init__(self, url, timeout):
+        self.url = url
+        self.timeout = timeout
+    
+    def fetch_recommendation(self, user_id):
+        # If this service is down, the error stays here
+        return self.call(f"{self.url}/recommendation/{user_id}")
+
+# /infrastructure/handler.py — Wire them together
+def get_recommendation_for_user(user_id):
+    # Try external first (faster)
+    try:
+        return ExternalRecommendationAPI().fetch_recommendation(user_id)
+    except ServiceUnavailable:
+        # Fall back to local logic if external is down
+        history = database.get_user_history(user_id)
+        return recommend_product(history)
+```
+
+This way, if the external service is down, your app still works. If you need to replace it, you change one file.
+
+---
+
+## Decision Logging
+
+When you make a decision that affects the standard, log it.
+
+**Create `DECISIONS.md`:**
+
+```markdown
+# Decisions
+
+## Decision: Use PostgreSQL instead of MongoDB
+Date: 2025-09-01
+Reasoning: We need ACID guarantees. MongoDB lost that tradeoff.
+Impact: Schema migrations required, joins are now possible
+Revert path: 2 days of work (if needed)
+
+## Decision: Move logic to /core package
+Date: 2025-09-05
+Reasoning: Core logic was scattered. Moving makes it testable without tools.
+Impact: New developers must respect core/infrastructure boundary
+Revert path: Can split back out, but not recommended
+
+## Decision: Use environment variables for all config
+Date: 2025-09-08
+Reasoning: Simpler than config files, works in containers
+Impact: No more project-specific config files in repo
+Revert path: Easy (parse env vars to config file instead)
+```
+
+When someone asks "why did you do this?", you have an answer.
+
+---
+
+## Check Your Work
+
+When you think you're done, run this checklist:
+
+```
+NXS Compliance Checklist
+=======================
+
+Definition of Done (all 7):
+☐ Logic works in isolation
+☐ Configuration is external
+☐ All dependencies explicit
+☐ Setup is automated
+☐ Runs same way everywhere
+☐ Understandable without original author
+☐ Handoff tested with real person
+
+The Four Rules:
+☐ Rule 1: Logic separate from tools
+☐ Rule 2: Configuration never hardcoded
+☐ Rule 3: Every dependency visible
+☐ Rule 4: Runs anywhere, for anyone
+
+The Three Gates:
+☐ Gate 1: Declaration (done before coding)
+☐ Gate 2: Integrity (done after building)
+☐ Gate 3: Sovereignty (done before shipping)
+
+The Four Outcomes (measurable):
+☐ Resilience: Handoff < 2 hours (tested)
+☐ Reusability: Logic works elsewhere unchanged
+☐ Ownership: Tool swap < 4 hours (or proven impossible)
+☐ Speed: Setup < 5 min, iterate < 10 min
+```
+
+If you check all these boxes, you're compliant.
+
+---
+
+_That's how you execute the Nexovia Standard. One project at a time._
