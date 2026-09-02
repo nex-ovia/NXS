@@ -1,413 +1,755 @@
-# GOVERNANCE.md — How to Execute NXS
+# GOVERNANCE.md — NXS Guardrails, Policies & Compliance Framework
 
-This guide tells you how to actually build to the Nexovia Standard. Use it alongside README.md.
+**Purpose:** Enforcement layer for the Nexovia Standard. Designed for skills/agents to apply automatically. Every new project, task, or agent setup must pass these gates and comply with these policies before execution.
 
----
-
-## Before You Start: Gate 1 — Declaration
-
-Spend 30 minutes writing this down. Not in your head. Written.
-
-**Create a file called `project_declaration.md` in your repo root:**
-
-```markdown
-# Project Declaration
-
-## What problem are we solving?
-[One clear sentence. Not "improve systems" — be specific.]
-
-## What's in scope?
-- 
-- 
-
-## What's out of scope?
-- 
-- 
-
-## How will we know it's done?
-[The definition of done checklist — what needs to be true before we ship?]
-
-## Dependencies (preliminary)
-- [Database choice and why]
-- [External APIs and why]
-- [Languages/frameworks and why]
-- [Infrastructure and why]
-
-## Handoff target
-[Who will need to run this? Describe them.]
-```
-
-Stop here. Get agreement. Then code.
+**For:** Skills (Claude Code, Pi, OpenCode) and any LLM enforcing NXS.
 
 ---
 
-## Rule 1: Logic Separate from Tools
+## PART 1: AGENT SETUP & INSTALLATION
 
-Your business logic is the part that solves the actual problem. Everything else is just plumbing.
-
-**Here's what separation looks like:**
-
-```
-/project
-  /core                    ← Business logic (testable, tool-agnostic)
-    logic.py
-    models.py
-    handlers.py
-  /infrastructure          ← Tool-specific code
-    database.py
-    api.py
-    config.py
-```
-
-**Test your core logic without any tools:**
-
-```python
-# In /core/logic.py — no imports from /infrastructure
-def calculate_recommendation(user_history, context):
-    return apply_algorithm(user_history, context)
-
-# Test it standalone
-assert calculate_recommendation([1,2,3], "context") == expected
-```
-
-**The /infrastructure layer wires tools to core logic:**
-
-```python
-# In /infrastructure/database.py
-from core.logic import calculate_recommendation
-
-def get_recommendation(user_id):
-    history = db.query(user_id)
-    context = cache.get('context')
-    result = calculate_recommendation(history, context)  # Call core logic
-    return result
-```
-
-**Why this matters:** You can test core logic without standing up a database. You can replace your database later without rewriting logic.
-
----
-
-## Rule 2: Configuration Never Hardcoded
-
-If it's a string that changes between environments, it goes in configuration.
-
-**Create one configuration file:**
-
-```toml
-# config.toml (or .env, or config.yaml — pick one)
-
-[database]
-host = "${DB_HOST}"          # From environment
-port = "${DB_PORT}"
-name = "myapp_prod"           # Can differ per env
-
-[api]
-timeout = 30                  # Value, never hardcoded in code
-retries = 3
-
-[feature_flags]
-new_algorithm = true          # Can be toggled without code change
-debug_logging = false
-```
-
-**In your code, read it once at startup:**
-
-```python
-import config
-
-def main():
-    db_host = config.database.host
-    timeout = config.api.timeout
-    # Use it
-```
-
-**Your `config.toml` file goes in version control. Your `.env` file (with secrets) does not.**
-
-Document what each setting does:
-
-```toml
-# DATABASE
-# The host and port of your database.
-# Can be overridden by DB_HOST and DB_PORT environment variables.
-# If not set, defaults to localhost:5432
-host = "${DB_HOST:localhost}"
-```
-
-**Why this matters:** You can deploy the same binary to staging and production by changing configuration, not code.
-
----
-
-## Rule 3: Every Dependency Visible
-
-Create a single file that lists everything your project depends on.
-
-**Create `DEPENDENCIES.md`:**
-
-```markdown
-# Project Dependencies
-
-## Required
-- Python 3.11+
-  - Why: Async context managers
-  - How to replace: Python 3.10 with compatibility shim, or rewrite async code
-  
-## External Services
-- PostgreSQL 13+
-  - Why: Main data store
-  - How to replace: Swap database layer (< 4 hours, core logic unchanged)
-  - When to upgrade: When support ends (2026)
-
-- Redis
-  - Why: Caching user sessions
-  - How to replace: In-memory cache + database (performance hit, but possible)
-  
-## Libraries (Python)
-- fastapi==0.104.1
-  - Why: HTTP server, modern async
-  - How to replace: Switch to Flask (API layer only, 2-3 hours)
-  
-- sqlalchemy==2.0.0
-  - Why: Database ORM
-  - How to replace: Raw SQL queries (tedious, but possible)
-
-- pydantic==2.0
-  - Why: Data validation
-  - How to replace: Manual validation (slow to write, easy to break)
-
-## CI/CD
-- GitHub Actions
-  - Why: Free for public repos, integrates with GitHub
-  - How to replace: GitLab CI or Jenkins (CI config only)
-
-- Docker
-  - Why: Reproducible environments
-  - How to replace: Manual server setup (not recommended; very fragile)
-
-## Threat: What could break us?
-- PostgreSQL goes away → Very unlikely, but rewrite would take 2 weeks
-- Redis becomes paid → We could go in-memory tomorrow
-- fastapi unmaintained → Switch to Flask or Django (infrastructure layer only)
-```
-
-**Why this matters:** When someone asks "can we replace this?", you already know the answer and how long it takes.
-
----
-
-## Rule 4: Runs Anywhere, for Anyone
-
-Setup should be one command. Not three commands, not "just run these manual steps first." One command.
-
-**Create a setup script:**
-
+### For Claude Code
 ```bash
-#!/bin/bash
-# setup.sh
-
-set -e
-
-echo "Setting up NXS example project..."
-
-# Check dependencies
-if ! command -v python3 &> /dev/null; then
-    echo "❌ Python 3 not found"
-    exit 1
-fi
-
-if ! command -v docker &> /dev/null; then
-    echo "❌ Docker not found"
-    exit 1
-fi
-
-# Install Python dependencies
-pip install -r requirements.txt
-
-# Start Docker services
-docker-compose up -d
-
-# Wait for services to be ready
-sleep 5
-
-# Initialize database
-python scripts/init_db.py
-
-echo "✅ Setup complete"
-echo "Run: python main.py"
+# Quick install
+skill_view(name='nexovia-standard')
 ```
 
-**Now setup is:**
-
+### For Pi (Ollama/qwen3)
 ```bash
-$ ./setup.sh
+# Quick install
+skill_view(name='nexovia-standard')
 ```
 
-**Not:**
-
-```
-1. Install Docker
-2. Install Python
-3. pip install -r requirements.txt
-4. Run docker-compose up -d
-5. Wait 30 seconds
-6. python scripts/init_db.py
-7. If that fails, check that Redis is running
+### For OpenCode
+```bash
+# Quick install
+skill_view(name='nexovia-standard')
 ```
 
-**Why this matters:** New developer runs one command. It works. They're productive in minutes, not hours.
+**After installation:** Skill enforces Gates 1, 2, 3 and policies for every new project.
 
 ---
 
-## After You Build: Gate 2 — Integrity
+## PART 2: GATE 1 — DECLARATION (REQUIRED BEFORE ANY CODING)
 
-Before you call it done, check these boxes:
+**Enforcement:** This gate must complete before agent starts ANY implementation work.
 
-**Structure Check:**
-- [ ] Core logic has no tool imports (python: no db, no HTTP, no file I/O)
-- [ ] Configuration is external (all values in config file or env vars)
-- [ ] Dependencies are documented (DEPENDENCIES.md exists and is complete)
-- [ ] Setup is automated (one command that works)
+**Agent Flow:**
+1. User asks to build something
+2. Agent immediately says: "Pausing. Declaration gate required first."
+3. Agent shows interactive declaration form (HTML preview)
+4. Agent collects all required fields
+5. User confirms
+6. Only then: "Declaration gate passed. Ready to build."
 
-**Code Check:**
-- [ ] Logic is testable in isolation (test core without tools)
-- [ ] Error handling is explicit (failures are named, not silent)
-- [ ] Logging tells the story (can I follow what happened from logs alone?)
+### Required Fields (All Mandatory)
 
-**Operations Check:**
-- [ ] Can someone else run this? (Actually let them, unsupervised)
-- [ ] Does it fail gracefully? (Errors are clear, not mysterious)
-- [ ] Can you see what's happening? (Metrics, logs, health checks)
+**2.1 Business Goal**
+```
+What is the primary business outcome you're trying to achieve?
+(This is NOT technical details — this is why the business cares)
 
----
-
-## Before You Ship: Gate 3 — Sovereignty
-
-This gate confirms you're not locked in.
-
-**Lock-in check:**
-- [ ] Could we swap the database? (1-2 days of work max)
-- [ ] Could we move to different cloud? (Infrastructure layer changes, logic untouched)
-- [ ] Could we rewrite in a different language? (Logic is independent, just rewrite infrastructure)
-
-**If you answer "no" or "weeks of work," you have a lock-in problem. Go fix it before shipping.**
-
-**Operational clarity:**
-- [ ] Who runs this in production? (Name them)
-- [ ] How do they run it? (Step by step in RUNBOOK.md)
-- [ ] What could go wrong? (List it. How would they fix it?)
-
-**Handoff is real:**
-- [ ] Did someone who didn't build this actually run the setup script? (Not "I ran it and it worked." Actually let them do it.)
-- [ ] Did they understand the code? (Ask them to describe one piece)
-
-**Metrics wired:**
-- [ ] Can you see each outcome? (Time to handoff? Deployment time? Error rates?)
-- [ ] Is it tracked somewhere? (Dashboard, monitoring, or spreadsheet — somewhere)
-
----
-
-## Common Pattern: External Dependencies
-
-When your code needs to call external services, use a pattern like this:
-
-```python
-# /core/logic.py — This doesn't know or care about external services
-def recommend_product(user_history):
-    # Pure logic, testable without anything external
-    return algorithm(user_history)
-
-# /infrastructure/api_client.py — External service isolation
-class ExternalRecommendationAPI:
-    def __init__(self, url, timeout):
-        self.url = url
-        self.timeout = timeout
-    
-    def fetch_recommendation(self, user_id):
-        # If this service is down, the error stays here
-        return self.call(f"{self.url}/recommendation/{user_id}")
-
-# /infrastructure/handler.py — Wire them together
-def get_recommendation_for_user(user_id):
-    # Try external first (faster)
-    try:
-        return ExternalRecommendationAPI().fetch_recommendation(user_id)
-    except ServiceUnavailable:
-        # Fall back to local logic if external is down
-        history = database.get_user_history(user_id)
-        return recommend_product(history)
+Examples:
+  ✓ "Reduce customer onboarding time from 2 weeks to 2 days"
+  ✗ "Build a Python API"
 ```
 
-This way, if the external service is down, your app still works. If you need to replace it, you change one file.
+**2.2 Map to NXS Outcomes**
+```
+Which of these outcomes does this project serve? (Select ≥1)
+
+□ Resilience — "Project survives without original builder" (handoff < 2h)
+□ Reusability — "Same logic works across 5+ contexts" (deploy unchanged)
+□ Ownership — "Never locked into specific tool" (tool swap < 4h)
+□ Speed — "Ship faster, iterate faster" (setup 5min, iterate < 10min)
+
+Requirement: Must select at least ONE.
+```
+
+**2.3 Problem Statement**
+```
+What specific problem are we solving?
+(One sentence. Specific, not vague.)
+
+Format:
+  [User/system] has [problem] because [root cause].
+  We will solve this by [approach].
+
+Examples:
+  ✓ "Sales team wastes 2 hours daily searching for customer history
+     because it's spread across 5 systems. We'll build unified search."
+  ✗ "Improve systems"
+```
+
+**2.4 Scope (In/Out)**
+```
+What's explicitly IN scope?
+  - 
+  - 
+
+What's explicitly OUT of scope?
+  - 
+  - 
+
+Requirement: List ≥2 items in each.
+Reason: Prevents scope creep. "We're not doing X" is as important as "We are doing Y".
+```
+
+**2.5 Success Criteria (Definition of Done)**
+```
+How will we KNOW this is done? (Be specific, measurable)
+
+Examples:
+  ✓ "API responds to 100 concurrent requests in < 500ms"
+  ✓ "Search returns results in < 3 seconds"
+  ✓ "Onboarding checklist automated; no manual steps"
+  ✗ "It works well"
+
+Requirement: ≥3 criteria. Each must be testable.
+```
+
+**2.6 Dependencies (Preliminary)**
+```
+What external things will you need?
+- Database? Which? Why?
+- APIs? Which? Why? How will we handle downtime?
+- Tools/libraries? Which? Version? Why? Fallback?
+- Infrastructure? Cloud? Local? Why?
+- Team/people? Whose approval? What's the timeline?
+
+Requirement: Every dependency must have "Why" and fallback/replacement strategy.
+```
+
+**2.7 Timeline & Resources**
+```
+When does this need to ship?
+Who's building this?
+Who approves it before shipping?
+Who runs it in production?
+
+Requirement: All four must be answered.
+```
+
+**2.8 Risk Assessment**
+```
+What could go wrong?
+- If [dependency] fails, what happens?
+- If [person] leaves, can someone else run it?
+- If [tool] becomes unavailable, what's the workaround?
+
+Requirement: Identify ≥3 risks + mitigation for each.
+```
+
+### Gate 1 Validation Rules
+
+```
+PASS criteria (ALL must be true):
+☐ Business goal is specific (not vague)
+☐ At least 1 NXS outcome selected
+☐ Problem statement is testable
+☐ Scope in/out documented (≥2 each)
+☐ Success criteria defined (≥3, each testable)
+☐ Dependencies listed with "why" + fallback
+☐ Timeline, people, approval clear
+☐ Risks identified + mitigations documented
+
+FAIL criteria (ANY one fails the gate):
+☒ Missing any required field
+☒ Outcomes not mapped
+☒ Success criteria unmeasurable
+☒ Dependencies missing "why"
+☒ No risk assessment
+
+If FAIL: Agent says "Cannot proceed. Please complete:"
+  [List missing items]
+```
 
 ---
 
-## Decision Logging
+## PART 3: DYNAMIC HTML PREVIEW & FEEDBACK
 
-When you make a decision that affects the standard, log it.
+**When Gate 1 is collected, agent generates interactive HTML preview:**
 
-**Create `DECISIONS.md`:**
+### Template: Declaration Summary (Agent-Generated)
 
-```markdown
-# Decisions
-
-## Decision: Use PostgreSQL instead of MongoDB
-Date: 2025-09-01
-Reasoning: We need ACID guarantees. MongoDB lost that tradeoff.
-Impact: Schema migrations required, joins are now possible
-Revert path: 2 days of work (if needed)
-
-## Decision: Move logic to /core package
-Date: 2025-09-05
-Reasoning: Core logic was scattered. Moving makes it testable without tools.
-Impact: New developers must respect core/infrastructure boundary
-Revert path: Can split back out, but not recommended
-
-## Decision: Use environment variables for all config
-Date: 2025-09-08
-Reasoning: Simpler than config files, works in containers
-Impact: No more project-specific config files in repo
-Revert path: Easy (parse env vars to config file instead)
+```html
+<!-- HTML generated by skill during Gate 1 -->
+<div class="nxs-declaration">
+  <h1>Project Declaration Review</h1>
+  
+  <section class="business-goal">
+    <h2>Business Goal</h2>
+    <p>{user_input_business_goal}</p>
+    <span class="status">✓ Specific</span>
+  </section>
+  
+  <section class="outcomes">
+    <h2>NXS Outcomes</h2>
+    <ul>
+      {if_resilience_selected: <li>✓ Resilience (handoff < 2h)</li>}
+      {if_reusability_selected: <li>✓ Reusability (5+ contexts)</li>}
+      {if_ownership_selected: <li>✓ Ownership (tool swap < 4h)</li>}
+      {if_speed_selected: <li>✓ Speed (5min setup, <10min iterate)</li>}
+    </ul>
+  </section>
+  
+  <section class="problem">
+    <h2>Problem Statement</h2>
+    <p>{user_input_problem}</p>
+    <span class="status">✓ Testable</span>
+  </section>
+  
+  <section class="scope">
+    <h2>Scope</h2>
+    <h3>In Scope:</h3>
+    <ul>
+      {for each item in scope_in: <li>{item}</li>}
+    </ul>
+    <h3>Out of Scope:</h3>
+    <ul>
+      {for each item in scope_out: <li>{item}</li>}
+    </ul>
+  </section>
+  
+  <section class="success">
+    <h2>Success Criteria</h2>
+    <ol>
+      {for each criterion in criteria: <li>{criterion} (Measurable: ✓)</li>}
+    </ol>
+  </section>
+  
+  <section class="dependencies">
+    <h2>Dependencies & Mitigations</h2>
+    <table>
+      <tr><th>Dependency</th><th>Why</th><th>Fallback/Swap</th><th>Status</th></tr>
+      {for each dep: <tr><td>{dep}</td><td>{why}</td><td>{fallback}</td><td>✓</td></tr>}
+    </table>
+  </section>
+  
+  <section class="risks">
+    <h2>Risk Assessment</h2>
+    <table>
+      <tr><th>Risk</th><th>Impact</th><th>Mitigation</th></tr>
+      {for each risk: <tr><td>{risk}</td><td>{impact}</td><td>{mitigation}</td></tr>}
+    </table>
+  </section>
+  
+  <section class="approval">
+    <h2>Stakeholders</h2>
+    <ul>
+      <li>Building: {builder}</li>
+      <li>Approves before ship: {approver}</li>
+      <li>Runs in production: {operator}</li>
+      <li>Timeline: {timeline}</li>
+    </ul>
+  </section>
+  
+  <section class="action">
+    <h2>Ready to Proceed?</h2>
+    <p>Agent awaits feedback:</p>
+    <ul>
+      <li><strong>Approve:</strong> "Yes, let's build"</li>
+      <li><strong>Modify:</strong> "Change [field] to [value]"</li>
+      <li><strong>Reject:</strong> "This isn't the right approach"</li>
+    </ul>
+  </section>
+</div>
 ```
 
-When someone asks "why did you do this?", you have an answer.
+**User feedback loop:**
+- "Approve" → Gate 1 passes, agent proceeds to building
+- "Modify [field]" → Agent updates, regenerates preview, asks again
+- "Reject" → Agent stops, asks what's wrong, updates declaration
 
 ---
 
-## Check Your Work
+## PART 4: GATE 2 — INTEGRITY (REQUIRED BEFORE "DONE")
 
-When you think you're done, run this checklist:
+**Enforcement:** This gate must pass before agent claims work is "done".
+
+### Checklist: Structure Validation
 
 ```
-NXS Compliance Checklist
-=======================
+Structure Check:
+☐ Declaration matches code structure? (code follows declared plan)
+☐ Core logic separated from tools? (testable in isolation)
+☐ Configuration external? (no hardcoded values)
+☐ All dependencies documented? (DEPENDENCIES.md exists, complete)
+☐ Setup automated? (one command works)
 
-Definition of Done (all 7):
-☐ Logic works in isolation
-☐ Configuration is external
-☐ All dependencies explicit
-☐ Setup is automated
-☐ Runs same way everywhere
-☐ Understandable without original author
+Testing Check:
+☐ Core logic tested without tools? (unit tests pass)
+☐ Definition of Done all 7 boxes?
+  ☐ Logic works in isolation
+  ☐ Configuration external
+  ☐ All dependencies explicit (versions + why)
+  ☐ Setup automated (one command)
+  ☐ Same everywhere (local, CI, prod)
+  ☐ Understandable without original author
+  ☐ Handoff instructions tested with real person
+
+Operations Check:
+☐ Error handling explicit? (failures named, not silent)
+☐ Logging tells story? (can follow what happened)
+☐ Can someone else run this? (actually tested)
+☐ Does it fail gracefully? (errors are clear)
+```
+
+### Gate 2 Validation Rules
+
+```
+PASS criteria (ALL must be true):
+☐ Structure matches Declaration
+☐ All dependencies documented with versions
+☐ Setup automation works without help
+☐ Definition of Done all 7 boxes checked
+☐ Core logic testable in isolation
+☐ Errors explicit, not silent
 ☐ Handoff tested with real person
 
-The Four Rules:
-☐ Rule 1: Logic separate from tools
-☐ Rule 2: Configuration never hardcoded
-☐ Rule 3: Every dependency visible
-☐ Rule 4: Runs anywhere, for anyone
+FAIL criteria (ANY one fails):
+☒ Structure doesn't match Declaration
+☒ Missing dependencies
+☒ Setup has manual steps
+☒ Definition of Done incomplete
+☒ Handoff not tested with real person
 
-The Three Gates:
-☐ Gate 1: Declaration (done before coding)
-☐ Gate 2: Integrity (done after building)
-☐ Gate 3: Sovereignty (done before shipping)
-
-The Four Outcomes (measurable):
-☐ Resilience: Handoff < 2 hours (tested)
-☐ Reusability: Logic works elsewhere unchanged
-☐ Ownership: Tool swap < 4 hours (or proven impossible)
-☐ Speed: Setup < 5 min, iterate < 10 min
+If FAIL: Agent says "Not ready. Fix before shipping:"
+  [List failures with specific problems]
 ```
-
-If you check all these boxes, you're compliant.
 
 ---
 
-_That's how you execute the Nexovia Standard. One project at a time._
+## PART 5: GATE 3 — SOVEREIGNTY (REQUIRED BEFORE SHIPPING)
+
+**Enforcement:** This gate must pass before any production deployment.
+
+### Checklist: No Lock-In
+
+```
+Lock-in Check:
+☐ Could we swap tools? (< 4 hours of work max)
+  Example: "If we moved database from PostgreSQL to DynamoDB,
+           logic unchanged. Only adapter changes (2 hours)."
+  
+☐ Does logic exist independent of tool?
+  Example: "Algorithm in /core/logic.py has zero tool imports.
+           Can rewrite infrastructure layer without touching it."
+  
+☐ Could we move to different infrastructure?
+  Example: "Works on Docker, would work on Lambda with env var change (< 1h)."
+
+Operational Clarity:
+☐ Who runs this in production? (named person/team)
+☐ How do they run it? (RUNBOOK.md with step-by-step)
+☐ What could go wrong? (error scenarios + how to fix)
+☐ Metrics wired? (are we tracking outcomes?)
+
+Handoff Reality:
+☐ Did someone OTHER than builder run setup? (not "I tested it")
+☐ Did they understand the code? (can they describe one piece?)
+☐ Can they restart it after failure? (tested procedure)
+```
+
+### Gate 3 Validation Rules
+
+```
+PASS criteria (ALL must be true):
+☐ Tool swap < 4 hours (or logic proven independent)
+☐ Could move infrastructure (with documented effort)
+☐ Operational clarity documented (runbook, who, how)
+☐ Handoff tested with real person (not just builder)
+☐ Outcomes measurable and tracked
+☐ No person/tool dependency ("only I can run it" = FAIL)
+
+FAIL criteria (ANY one fails):
+☒ Locked into vendor (no tool swap possible)
+☒ Logic intertwined with tool (would require rewrite)
+☒ Operational clarity missing (no runbook, no owner)
+☒ Handoff not tested with real person
+☒ "Only I can run this" (resilience failure)
+
+If FAIL: Agent says "Sovereignty gate failed. Cannot ship:"
+  [List lock-in problems + fix requirements]
+```
+
+---
+
+## PART 6: POLICIES & COMPLIANCE RULES
+
+### Policy 1: Outcome Traceability
+
+```
+Rule: Every component must map to ≥1 NXS outcome.
+
+Enforcement:
+  - Node type = [code, agent, config, data, decision, business_process]
+  - Node outcomes = [resilience, reusability, ownership, speed]
+  - Validation: No orphan components (unmapped code)
+
+Violation: "This function doesn't serve any outcome. Remove or map it."
+```
+
+### Policy 2: Dependency Documentation
+
+```
+Rule: Every external dependency visible in one place.
+
+Enforcement:
+  - File: DEPENDENCIES.md (or equivalent)
+  - For each dependency:
+    • Name + version
+    • Why we chose it
+    • How to replace it (effort + approach)
+    • When to upgrade (support lifecycle)
+
+Violation: "Missing DEPENDENCIES.md or incomplete entries."
+```
+
+### Policy 3: Configuration Management
+
+```
+Rule: Zero hardcoded values. All config external.
+
+Enforcement:
+  - No strings like:
+    ☒ "postgres://prod-db.internal"
+    ☒ "api_key_12345"
+    ☒ timeouts, retries, batch sizes
+  - Instead:
+    ✓ "${DB_HOST}" from environment
+    ✓ "config.toml" in repo (no secrets)
+    ✓ ".env" (local, never in repo)
+
+Validation:
+  - Grep code for hardcoded values
+  - config.toml exists and is documented
+  - All env vars in .env.example
+
+Violation: "Found hardcoded [value]. Move to config before shipping."
+```
+
+### Policy 4: Setup Automation
+
+```
+Rule: Setup is one command. No manual steps.
+
+Enforcement:
+  - File: setup.sh or equivalent
+  - Command: ./setup.sh
+  - Result: Fully ready to run
+  - No: "Then set this, then click that, then wait"
+
+Validation:
+  - Fresh clone runs setup.sh successfully
+  - No prompt for usernames/passwords (use env vars)
+  - All dependencies installed automatically
+
+Violation: "Setup has manual steps. Automate everything before shipping."
+```
+
+### Policy 5: Error Handling
+
+```
+Rule: Errors are explicit, not silent.
+
+Enforcement:
+  - ✓ Errors logged with context
+  - ✓ Error messages human-readable
+  - ✓ Clear next steps ("Try: ...")
+  - ✗ Silent failures (no logging)
+  - ✗ Cryptic error codes
+
+Validation:
+  - Run with logging enabled
+  - Break each critical component
+  - Verify error messages are clear
+
+Violation: "Error handling unclear. Implement specific error messages."
+```
+
+### Policy 6: Handoff Documentation
+
+```
+Rule: Handoff is documented and tested.
+
+Enforcement:
+  - File: RUNBOOK.md
+  - Contents:
+    • Prerequisites (what you need installed)
+    • Setup (copy-paste commands)
+    • How to run (exactly what to do)
+    • What could go wrong (error scenarios + fixes)
+    • Who to ask for help
+
+  - Testing:
+    • Someone OTHER than builder follows RUNBOOK.md
+    • They get it running without help
+    • They understand what's happening
+
+Violation: "RUNBOOK untested or unclear. Rewrite and test with real person."
+```
+
+### Policy 7: Security Baseline
+
+```
+Rule: No secrets in code or repo.
+
+Enforcement:
+  - ☒ API keys hardcoded
+  - ☒ Database passwords in config
+  - ☒ AWS credentials in code
+  - ✓ Use environment variables
+  - ✓ Use secrets manager
+  - ✓ Document where each secret comes from
+
+Validation:
+  - Scan code for common patterns (password=, api_key=, etc.)
+  - .gitignore covers .env, secrets/
+  - No secrets in git history
+
+Violation: "Security risk: [secret] found in [file]. Remove immediately."
+```
+
+### Policy 8: Testing Requirements
+
+```
+Rule: Core logic tested independently.
+
+Enforcement:
+  - Core logic has unit tests
+  - Tests run without external services
+  - No database, no API calls in core tests
+  - Test coverage ≥ 70% for critical logic
+
+Validation:
+  - tests/ directory exists
+  - Run tests without setup.sh
+  - Tests pass in isolation
+
+Violation: "Core logic untested. Add unit tests before shipping."
+```
+
+---
+
+## PART 7: CITATIONS & BEST PRACTICES LIBRARY
+
+### Deterministic References (Use These, Not Opinions)
+
+**For Logic Separation:**
+```
+Citation: NXS README.md "Rule 1: Logic Separate from Tools"
+Best Practice: "Core logic in /core, tool code in /infrastructure"
+Example: /core/algorithm.py (no imports from /infrastructure)
+SOP: https://github.com/nex-ovia/NXS/blob/main/GOVERNANCE.md#rule-1
+```
+
+**For Configuration:**
+```
+Citation: NXS README.md "Rule 2: Configuration Never Hardcoded"
+Best Practice: "All values that change in config.toml or env vars"
+Example: DB_HOST="${DB_HOST:localhost}", not hardcoded
+SOP: https://github.com/nex-ovia/NXS/blob/main/GOVERNANCE.md#rule-2
+```
+
+**For Dependencies:**
+```
+Citation: NXS README.md "Rule 3: Every Dependency Visible"
+Best Practice: "List all in DEPENDENCIES.md with why + how to replace"
+Example: "PostgreSQL 13+ because ACID needed; replace with rewrite (2w)"
+SOP: https://github.com/nex-ovia/NXS/blob/main/GOVERNANCE.md#rule-3
+```
+
+**For Automation:**
+```
+Citation: NXS README.md "Rule 4: Runs Anywhere, for Anyone"
+Best Practice: "setup.sh + one command to get running"
+Example: ./setup.sh installs deps, starts services, initializes db
+SOP: https://github.com/nex-ovia/NXS/blob/main/GOVERNANCE.md#rule-4
+```
+
+---
+
+## PART 8: COMPLIANCE CHECKLIST (AGENT-EXECUTABLE)
+
+**When agent completes project, it runs this checklist:**
+
+```toml
+[compliance]
+
+# Gate 1: Declaration
+gate_1_business_goal = "Present and specific"          # PASS/FAIL
+gate_1_outcomes_mapped = "≥1 outcome selected"         # PASS/FAIL
+gate_1_scope_defined = "In/out scope clear"            # PASS/FAIL
+gate_1_success_criteria = "≥3 testable criteria"       # PASS/FAIL
+gate_1_dependencies = "All deps with why + fallback"   # PASS/FAIL
+gate_1_risks = "≥3 risks + mitigations"                # PASS/FAIL
+
+# Gate 2: Integrity
+gate_2_structure = "Matches Declaration"               # PASS/FAIL
+gate_2_logic_separated = "Core testable in isolation"  # PASS/FAIL
+gate_2_config_external = "No hardcoded values"         # PASS/FAIL
+gate_2_deps_documented = "DEPENDENCIES.md complete"    # PASS/FAIL
+gate_2_setup_automated = "One command works"           # PASS/FAIL
+gate_2_dod = "All 7 Definition of Done boxes"          # PASS/FAIL
+gate_2_handoff_tested = "Real person ran it"           # PASS/FAIL
+
+# Gate 3: Sovereignty
+gate_3_tool_swap = "< 4 hours documented"              # PASS/FAIL
+gate_3_infrastructure = "Portable (documented)"        # PASS/FAIL
+gate_3_operational = "RUNBOOK.md + owner clear"        # PASS/FAIL
+gate_3_metrics = "Outcomes measurable + tracked"       # PASS/FAIL
+gate_3_handoff_real = "Tested with non-builder"        # PASS/FAIL
+
+# Policies
+policy_outcome_traceability = "No orphan components"    # PASS/FAIL
+policy_dependencies = "Visible + documented"            # PASS/FAIL
+policy_config = "External, no secrets"                  # PASS/FAIL
+policy_setup = "Automated, one command"                 # PASS/FAIL
+policy_errors = "Explicit, not silent"                  # PASS/FAIL
+policy_handoff = "Documented + tested"                  # PASS/FAIL
+policy_security = "No secrets in repo"                  # PASS/FAIL
+policy_testing = "Core logic tested"                    # PASS/FAIL
+
+# Overall
+compliance_status = "PASS/FAIL"                         # Aggregate
+violations = ["List of failures if FAIL"]
+ready_to_ship = true/false
+```
+
+---
+
+## PART 9: HOW SKILLS ENFORCE THIS
+
+### Agent Startup Sequence
+
+```
+1. Skill loads (skill_view(name='nexovia-standard'))
+2. Agent is now NXS-compliant
+3. User asks to build something
+4. Agent responds: "Gate 1: Declaration required. Let me collect info."
+```
+
+### Gate 1 Enforcement (Before Code)
+
+```
+Agent:
+  ✓ Shows interactive HTML form (Gate 1 fields)
+  ✓ Collects all required info
+  ✓ Generates Declaration summary preview
+  ✓ Asks user: "Approve? Modify? Reject?"
+  ✓ Only proceeds if user says "Approve"
+  ✓ Saves Declaration to project_declaration.md
+```
+
+### Gate 2 Enforcement (Before "Done")
+
+```
+Agent:
+  ✓ Checks every box in Gate 2 checklist
+  ✓ Runs automated validation:
+    - Scans code for hardcoded values
+    - Verifies DEPENDENCIES.md exists
+    - Checks setup.sh runs successfully
+    - Tests core logic in isolation
+  ✓ If ANY check fails: "Not ready. Fix:"
+      [specific problems + how to fix]
+  ✓ Blocks shipping until all pass
+```
+
+### Gate 3 Enforcement (Before Ship)
+
+```
+Agent:
+  ✓ Verifies RUNBOOK.md exists
+  ✓ Confirms handoff tested with real person
+  ✓ Checks outcomes are measurable
+  ✓ If ANY check fails: "Cannot ship:"
+      [sovereignty problems + how to fix]
+  ✓ Blocks production deployment until all pass
+```
+
+### Compliance Reporting
+
+```
+Agent generates:
+  - Compliance scorecard (PASS/FAIL for each gate + policy)
+  - Violations list (specific problems)
+  - Fix recommendations (deterministic, from SOP)
+  - Signed-off by agent + user
+```
+
+---
+
+## PART 10: QUICK REFERENCE FOR AGENTS
+
+### When User Asks to Build
+
+```
+Agent checklist (execute in order):
+
+1. ✓ Load skill: skill_view(name='nexovia-standard')
+2. ✓ Say: "Gate 1 required. Collecting declaration."
+3. ✓ Show Gate 1 HTML form (9 required fields)
+4. ✓ Generate Declaration summary
+5. ✓ Ask: "Ready to build?"
+6. ✓ Wait for approval
+7. ✓ Build to four rules
+8. ✓ Before "done": Run Gate 2 checks
+9. ✓ If Gate 2 fails: List specific problems
+10. ✓ Before ship: Run Gate 3 checks
+11. ✓ If Gate 3 fails: List lock-in problems
+12. ✓ Only ship when all gates PASS
+```
+
+### When Gates Fail
+
+```
+Agent response (deterministic, not opinion):
+
+GATE 1 FAIL: "Cannot proceed without [field]. Please provide:"
+  [Specific missing field + why required]
+
+GATE 2 FAIL: "Not ready to ship. Fix before proceeding:"
+  • [Specific problem from checklist]
+    How to fix: [SOP link or example]
+  • [Next problem]
+    How to fix: [SOP link or example]
+
+GATE 3 FAIL: "Cannot ship. Lock-in detected:"
+  • [Lock-in problem]
+    Impact: [what breaks if this tool fails]
+    Fix: [how to make it independent]
+```
+
+---
+
+## PART 11: INTERNAL DOCUMENTS & ONE-PAGERS
+
+**Link to internal docs from GOVERNANCE:**
+
+```
+For Logic Separation:
+  → See: NXS README.md Rule 1
+  → Example: GOVERNANCE.md "Rule 1: Logic Separate from Tools"
+  → SOP: [Link to internal doc if exists]
+
+For Configuration:
+  → See: NXS README.md Rule 2
+  → Example: GOVERNANCE.md "Rule 2: Configuration Never Hardcoded"
+  → Template: [Link to config template if exists]
+
+For Dependencies:
+  → See: NXS README.md Rule 3
+  → Template: DEPENDENCIES.md example
+  → SOP: [Link to internal doc if exists]
+
+For Setup Automation:
+  → See: NXS README.md Rule 4
+  → Example: GOVERNANCE.md "Rule 4: Runs Anywhere, for Anyone"
+  → Template: setup.sh template
+```
+
+---
+
+_This is the enforcement layer. Skills use this. Gates are binary (PASS/FAIL). No compromise._
