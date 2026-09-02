@@ -107,9 +107,9 @@ A: First few times, yes (30 min Declaration gate). After that, you'll ship faste
 ## Getting Help
 
 - **How do I install?** → See INSTALL.md
-- **How do agents use it?** → See SKILL.md
-- **How are gates enforced?** → See GOVERNANCE.md
+- **How do I use it?** → See GETTING_STARTED.md
 - **What's the specification?** → See nxs_schema.toml
+- **How do agents load this?** → See skill.toml (agent instructions) and governance.toml (enforcement)
 
 ---
 

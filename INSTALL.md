@@ -13,33 +13,25 @@ Copy the skill files to your agent's skill directory:
 **Hermes Desktop:**
 ```bash
 mkdir -p ~/.hermes/skills/nexovia-standard
-cp SKILL.md ~/.hermes/skills/nexovia-standard/
-cp GOVERNANCE.md ~/.hermes/skills/nexovia-standard/
-cp nxs_schema.toml ~/.hermes/skills/nexovia-standard/
+cp nxs_schema.toml skill.toml governance.toml ~/.hermes/skills/nexovia-standard/
 ```
 
 **Claude Code:**
 ```bash
 mkdir -p ~/.claude_code/skills/nexovia-standard
-cp SKILL.md ~/.claude_code/skills/nexovia-standard/
-cp GOVERNANCE.md ~/.claude_code/skills/nexovia-standard/
-cp nxs_schema.toml ~/.claude_code/skills/nexovia-standard/
+cp nxs_schema.toml skill.toml governance.toml ~/.claude_code/skills/nexovia-standard/
 ```
 
 **Pi (Ollama):**
 ```bash
 mkdir -p ~/.pi/skills/nexovia-standard
-cp SKILL.md ~/.pi/skills/nexovia-standard/
-cp GOVERNANCE.md ~/.pi/skills/nexovia-standard/
-cp nxs_schema.toml ~/.pi/skills/nexovia-standard/
+cp nxs_schema.toml skill.toml governance.toml ~/.pi/skills/nexovia-standard/
 ```
 
 **OpenCode:**
 ```bash
 mkdir -p ~/.opencode/skills/nexovia-standard
-cp SKILL.md ~/.opencode/skills/nexovia-standard/
-cp GOVERNANCE.md ~/.opencode/skills/nexovia-standard/
-cp nxs_schema.toml ~/.opencode/skills/nexovia-standard/
+cp nxs_schema.toml skill.toml governance.toml ~/.opencode/skills/nexovia-standard/
 ```
 
 ### Step 2: Use the Skill
@@ -71,13 +63,13 @@ pi build "customer search API"
 **Install:**
 ```bash
 mkdir -p ~/.hermes/skills/nexovia-standard
-cp SKILL.md GOVERNANCE.md nxs_schema.toml ~/.hermes/skills/nexovia-standard/
+cp nxs_schema.toml skill.toml governance.toml ~/.hermes/skills/nexovia-standard/
 ```
 
 **Verify:**
 ```bash
 ls -la ~/.hermes/skills/nexovia-standard/
-# Should show: SKILL.md, GOVERNANCE.md, nxs_schema.toml
+# Should show: nxs_schema.toml, skill.toml, governance.toml
 ```
 
 **Use:**
@@ -100,13 +92,13 @@ rm -rf ~/.hermes/skills/nexovia-standard
 **Install:**
 ```bash
 mkdir -p ~/.claude_code/skills/nexovia-standard
-cp SKILL.md GOVERNANCE.md nxs_schema.toml ~/.claude_code/skills/nexovia-standard/
+cp nxs_schema.toml skill.toml governance.toml ~/.claude_code/skills/nexovia-standard/
 ```
 
 **Verify:**
 ```bash
 ls -la ~/.claude_code/skills/nexovia-standard/
-# Should show: SKILL.md, GOVERNANCE.md, nxs_schema.toml
+# Should show: nxs_schema.toml, skill.toml, governance.toml
 ```
 
 **Use:**
@@ -127,7 +119,7 @@ rm -rf ~/.claude_code/skills/nexovia-standard
 **Install:**
 ```bash
 mkdir -p ~/.pi/skills/nexovia-standard
-cp SKILL.md GOVERNANCE.md nxs_schema.toml ~/.pi/skills/nexovia-standard/
+cp nxs_schema.toml skill.toml governance.toml ~/.pi/skills/nexovia-standard/
 ```
 
 **Verify:**
@@ -159,7 +151,7 @@ rm -rf ~/.pi/skills/nexovia-standard
 **Install:**
 ```bash
 mkdir -p ~/.opencode/skills/nexovia-standard
-cp SKILL.md GOVERNANCE.md nxs_schema.toml ~/.opencode/skills/nexovia-standard/
+cp nxs_schema.toml skill.toml governance.toml ~/.opencode/skills/nexovia-standard/
 ```
 
 **Verify:**
@@ -188,7 +180,7 @@ rm -rf ~/.opencode/skills/nexovia-standard
 **Install:**
 ```bash
 mkdir -p ~/.your_tool/skills/nexovia-standard
-cp SKILL.md GOVERNANCE.md nxs_schema.toml ~/.your_tool/skills/nexovia-standard/
+cp nxs_schema.toml skill.toml governance.toml ~/.your_tool/skills/nexovia-standard/
 ```
 
 **Configure Your Tool:**
@@ -216,13 +208,14 @@ rm -rf ~/.your_tool/skills/nexovia-standard
 ```
 ~/.hermes/skills/
 ├── nexovia-standard/
-│   ├── SKILL.md (399 lines — agent instructions)
-│   ├── GOVERNANCE.md (958 lines — gates, policies, enforcement)
-│   └── nxs_schema.toml (326 lines — specification)
+│   ├── nxs_schema.toml (250 lines — reference architecture)
+│   ├── governance.toml (227 lines — gates, policies)
+│   ├── skill.toml (164 lines — workflow)
+│   └── [optional: README.md, INSTALL.md, GETTING_STARTED.md]
 └── [other skills...]
 ```
 
-That's it. 3 files, ~2,000 lines, no dependencies.
+That's it. 3 core TOML files, ~641 lines, no dependencies.
 
 ---
 
@@ -239,7 +232,7 @@ ls -la ~/.hermes/skills/nexovia-standard/
 
 # If not, create and copy
 mkdir -p ~/.hermes/skills/nexovia-standard
-cp SKILL.md GOVERNANCE.md nxs_schema.toml ~/.hermes/skills/nexovia-standard/
+cp nxs_schema.toml skill.toml governance.toml ~/.hermes/skills/nexovia-standard/
 ```
 
 ### Problem: "Gates aren't enforcing"
@@ -249,8 +242,8 @@ cp SKILL.md GOVERNANCE.md nxs_schema.toml ~/.hermes/skills/nexovia-standard/
 **Fix:**
 ```bash
 # Verify files exist
-ls ~/.hermes/skills/nexovia-standard/SKILL.md
-ls ~/.hermes/skills/nexovia-standard/GOVERNANCE.md
+ls ~/.hermes/skills/nexovia-standard/nxs_schema.toml
+ls ~/.hermes/skills/nexovia-standard/governance.toml
 
 # Restart agent and try again
 # Start new project (gates apply to new projects only)
@@ -258,12 +251,12 @@ ls ~/.hermes/skills/nexovia-standard/GOVERNANCE.md
 
 ### Problem: "Policy violations aren't blocking"
 
-**Cause:** GOVERNANCE.md not in skill directory
+**Cause:** governance.toml not in skill directory
 
 **Fix:**
 ```bash
-# Make sure GOVERNANCE.md is there
-cp GOVERNANCE.md ~/.hermes/skills/nexovia-standard/
+# Make sure governance.toml is there
+cp governance.toml ~/.hermes/skills/nexovia-standard/
 
 # Restart and try again
 ```
@@ -300,31 +293,34 @@ pi build test
 
 ## What Gets Installed
 
-**3 files only:**
+**3 TOML files (agent-optimized):**
 
-1. **SKILL.md** (399 lines)
-   - Agent instructions
-   - Four outcomes, four rules, three gates
-   - Workflow for applying NXS
-   - Validation checklist
+1. **nxs_schema.toml** (250 lines)
+   - Reference architecture
+   - Single source of truth
+   - Points to all other resources
 
-2. **GOVERNANCE.md** (958 lines)
+2. **governance.toml** (227 lines)
    - How to enforce Gate 1 (Declaration)
    - How to enforce Gate 2 (Integrity)
    - How to enforce Gate 3 (Sovereignty)
    - 8 explicit policies
-   - How to version + extend policies
-   - How to add new agent frameworks
 
-3. **nxs_schema.toml** (326 lines)
-   - Specification for any project
-   - 8 node types
-   - 14 runtimes
-   - How to extend schema
+3. **skill.toml** (164 lines)
+   - 13-step workflow
+   - Agent loading instructions
+   - References to schema elements
 
-**Total:** ~2,000 lines
+**Optional markdown files (human documentation):**
+
+- README.md (what is NXS)
+- INSTALL.md (how to install)
+- GETTING_STARTED.md (how to use)
+
+**Total:** ~641 lines of TOML (core)
 **Dependencies:** None
 **Works offline:** Yes
+**Token efficiency:** 65% reduction per project (agents load only what they need)
 
 ---
 

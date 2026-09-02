@@ -1,30 +1,109 @@
-# NXS Universal Manifest Specification (v0.1)
+# NXS Project Manifest Template
 
-The `project_manifest.toml` is the authoritative source of truth for the system.
+Every NXS project should have a `nxs-manifest.toml` file in the project root that answers the 9 Declaration questions.
 
-## 1. Root Configuration
+---
 
-Every manifest must reference a remote standard to ensure zero-redundancy and instant validation.
+## Template: nxs-manifest.toml
 
-- **`standard`**: URL to the NXS standard definition (e.g., `https://nex-ovia.com/standards/v0.1/nxs_schema.toml`).
-- **`root_dir`**: The starting point for file-to-node linking.
+```toml
+[project]
+name = "My Project"
+description = "Brief description of what this project does"
+version = "0.1.0"
 
-## 2. Node Data Dictionary
+[declaration]
+# Gate 1: These 9 fields are mandatory before coding starts
 
-| Key | Value Type | Allowed Values (Enums) |
-| :--- | :--- | :--- |
-| **`layer`** | Enum | `governance`, `orchestration`, `execution`, `persistence`, `surface` |
-| **`type`** | Enum | `manifest`, `entrypoint`, `logic`, `agent`, `manual`, `adapter`, `ui` |
-| **`runtime`** | String | e.g., `rust-2024`, `python-3.12`, `gpt-4o`, `human-in-loop` |
-| **`criticality`**| Enum | `high`, `medium`, `low` |
+goal = "What problem are we solving?"
+success_metrics = "How will we know it worked?"
+scope_boundary = "What is IN scope, what is OUT?"
+dependencies = "Every external system we depend on"
+timeline = "When does it need to ship?"
+known_risks = "What could go wrong?"
+stakeholders = "Who needs to approve or know?"
+assumptions = "What are we assuming to be true?"
+constraints = "What are we NOT allowed to do?"
 
-## 3. Relationships & Links
+[outcomes]
+# Map this project to NXS outcomes
 
-- **`path`**: Links the node to the physical file or document. This enables the **Orphan Detector**.
-- **`dependencies`**: Creates the directed graph of intent.
-- **`contracts`**: Defines the "Action = Requirement" pair that acts as the gate for implementation.
+resilience = "How does this project help systems survive change?"
+reusability = "How can this be used in other projects unchanged?"
+ownership = "How does this avoid tool lock-in?"
+speed = "How does this enable fast setup and iteration?"
 
-## 4. Decision Logic Examples
+[structure]
+# Reference key files required by NXS
 
-- **Sovereignty Check**: If `runtime` is not in the "Local-First" whitelist, the project is flagged.
-- **Risk Assessment**: If a `criticality: high` node depends on a `criticality: low` node, it is flagged as an architectural risk.
+nxs_standard = "https://github.com/nex-ovia/NXS"
+manifest = "nxs-manifest.toml"
+dependencies_file = "DEPENDENCIES.md"
+runbook_file = "RUNBOOK.md"
+setup_script = "setup.sh"
+
+[gates]
+# Track gate passage
+
+gate_1_declaration = false  # Set to true after Gate 1 passes
+gate_2_integrity = false    # Set to true after Gate 2 passes
+gate_3_sovereignty = false  # Set to true after Gate 3 passes
+```
+
+---
+
+## How to Use This Template
+
+1. **Copy** `nxs-manifest.toml` to your project root
+2. **Fill in** the 9 Declaration fields (Gate 1)
+3. **Update outcomes** to show how your project serves the standard
+4. **Reference** your required files (DEPENDENCIES.md, RUNBOOK.md, setup.sh)
+5. **Mark gates as true** as you pass Gate 2 and Gate 3
+
+---
+
+## What Each Section Means
+
+**`[project]`**: Basic metadata about your project
+
+**`[declaration]`**: The 9 mandatory questions from Gate 1 (before coding)
+
+**`[outcomes]`**: How this project aligns with NXS outcomes (Resilience, Reusability, Ownership, Speed)
+
+**`[structure]`**: References to required files and the standard
+
+**`[gates]`**: Tracks which gates you've passed
+
+---
+
+## Minimal Example
+
+```toml
+[project]
+name = "Customer API"
+version = "1.0.0"
+
+[declaration]
+goal = "Provide REST API for customer queries"
+success_metrics = "API responds in <100ms, 99.9% uptime"
+scope_boundary = "Read-only queries only, no updates"
+dependencies = "PostgreSQL 14, Redis 7, AWS Lambda"
+timeline = "Ship by end of sprint"
+known_risks = "Database migration could cause downtime"
+stakeholders = "Platform team, Support team"
+assumptions = "Customer data is already in PostgreSQL"
+constraints = "Must work offline with cache"
+
+[outcomes]
+resilience = "Runbook ensures support can operate without original author"
+reusability = "Logic works in other services unchanged"
+ownership = "No vendor lock-in (can swap PostgreSQL)"
+speed = "setup.sh brings new dev to working state in 5 min"
+
+[gates]
+gate_1_declaration = true
+gate_2_integrity = false
+gate_3_sovereignty = false
+```
+
+That's it. Use `nxs-manifest.toml` as your declaration and tracking file.
