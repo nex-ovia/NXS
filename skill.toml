@@ -1,0 +1,164 @@
+[skill_metadata]
+name = "Nexovia Standard"
+version = "2.0.0"
+purpose = "Enforce resilient, reusable, autonomous, fast delivery"
+for_agents = ["Hermes", "Claude Code", "Pi", "OpenCode", "Custom"]
+
+[outcomes]
+resilience_goal = "Project survives without original builder"
+resilience_metric = "Handoff in under 2 hours"
+reusability_goal = "Same logic works unchanged in 5+ contexts"
+reusability_metric = "Deploy to different project without modification"
+ownership_goal = "Never locked into any tool"
+ownership_metric = "Tool swap in under 4 hours"
+speed_goal = "Ship faster iterate faster"
+speed_metric = "Setup 5 min iterate 10 min"
+
+[rules]
+rule_1 = "Logic separate from tools"
+rule_2 = "Configuration never hardcoded"
+rule_3 = "Every dependency visible"
+rule_4 = "Runs anywhere for anyone"
+
+[[workflow_steps]]
+phase = "discovery"
+step = 1
+name = "Load Project Declaration"
+action = "Ask user for 9 mandatory fields"
+duration_minutes = 30
+fields = ["goal", "success_metrics", "scope", "dependencies", "timeline", "risks", "stakeholders", "assumptions", "constraints"]
+reference_gate = "nxs_schema.toml#gates.gate_1"
+
+[[workflow_steps]]
+phase = "discovery"
+step = 2
+name = "Map Outcomes"
+action = "For each component, trace to Resilience Reusability Ownership Speed"
+validation = "Every component has at least one outcome"
+reference = "governance.toml#policy_1"
+
+[[workflow_steps]]
+phase = "build"
+step = 3
+name = "Implement Core Logic"
+action = "Build logic independent of any tool"
+validation = "Logic works in isolation, no tool calls"
+reference = "governance.toml#policy_1"
+
+[[workflow_steps]]
+phase = "build"
+step = 4
+name = "Externalize Configuration"
+action = "All values that change go to environment or config file"
+validation = "No hardcoded URLs passwords secrets"
+reference = "governance.toml#policy_3"
+
+[[workflow_steps]]
+phase = "build"
+step = 5
+name = "Document Dependencies"
+action = "Create DEPENDENCIES.md with every external system"
+format = "name | version | why | fallback | swap_strategy"
+reference = "governance.toml#policy_2"
+
+[[workflow_steps]]
+phase = "build"
+step = 6
+name = "Automate Setup"
+action = "Create setup.sh that runs all setup steps"
+validation = "New person runs setup.sh only"
+reference = "governance.toml#policy_4"
+
+[[workflow_steps]]
+phase = "testing"
+step = 7
+name = "Write Core Tests"
+action = "Achieve 70 percent+ coverage on business logic"
+automation = "pytest --cov=src/"
+reference = "governance.toml#policy_8"
+
+[[workflow_steps]]
+phase = "testing"
+step = 8
+name = "Write Integration Tests"
+action = "Test interactions between components"
+automation = "pytest tests/integration/"
+reference = "governance.toml#policy_8"
+
+[[workflow_steps]]
+phase = "verification"
+step = 9
+name = "Run Gate 2 Integrity Checks"
+action = "Verify 9 automated checks before declaring done"
+checks = ["no_secrets", "dependencies_declared", "setup_works", "tests_pass", "runbook_exists", "schema_valid", "manifest_present", "no_hardcoded_values", "integration_tests_pass"]
+reference_gate = "nxs_schema.toml#gates.gate_2"
+
+[[workflow_steps]]
+phase = "documentation"
+step = 10
+name = "Write RUNBOOK.md"
+action = "Step-by-step guide for operating this"
+sections = ["Setup", "How to Run", "Troubleshooting", "Monitoring", "Incident Response"]
+validation = "Test with real person unfamiliar with code"
+reference = "governance.toml#policy_6"
+
+[[workflow_steps]]
+phase = "documentation"
+step = 11
+name = "Write Architecture Documentation"
+action = "Document decisions and tradeoffs"
+sections = ["System Architecture", "Why These Choices", "Tradeoffs", "Future Considerations"]
+reference = "governance.toml#policy_1"
+
+[[workflow_steps]]
+phase = "sovereignty"
+step = 12
+name = "Run Gate 3 Sovereignty Checks"
+action = "Verify 8 real-world portability checks"
+checks = ["tool_swap_4h", "data_portable", "no_vendor_lockin", "metrics_wired", "handoff_tested", "no_person_dependency", "version_controlled", "documented"]
+reference_gate = "nxs_schema.toml#gates.gate_3"
+
+[[workflow_steps]]
+phase = "ship"
+step = 13
+name = "Ship with Confidence"
+action = "Deploy to production"
+all_gates = "PASS PASS PASS"
+reference = "nxs_schema.toml"
+
+[agent_loading_instructions]
+entry_point = "nxs_schema.toml"
+first_load = "Read [references] section"
+then_load = "Only load files or sections needed for this project"
+never_load_entire = "Do NOT load all of SKILL.md GOVERNANCE.md into context"
+token_optimization = "Load only the specific gate or policy needed"
+examples = "For gate_1 load nxs_schema.toml#gates.gate_1 and governance.toml#gate_1_declaration"
+scaling = "For 100 projects this saves 600000+ tokens"
+
+[node_types_reference]
+reference = "nxs_schema.toml#node_types"
+description = "Eight types of components that can exist in any project"
+use_case = "Map each component in your project to one node type"
+
+[runtimes_reference]
+reference = "nxs_schema.toml#runtimes"
+description = "Fourteen execution environments"
+use_case = "Choose runtime for each code or agent node"
+
+[definition_of_done_reference]
+reference = "nxs_schema.toml#definition_of_done"
+count = 7
+description = "Seven boxes that must be checked before shipping"
+
+[schema_as_template]
+for_users = "People use nxs_schema.toml as their template"
+copy_this = "nxs_schema.toml contains the TOML structure they need"
+customize = "They add their project-specific sections"
+reference = "See MANIFEST-SPEC.md for example"
+
+[results_if_all_gates_pass]
+resilience = "Project survives without original builder (tested)"
+reusability = "Logic works unchanged in multiple contexts"
+ownership = "Tool swap is under 4 hours not 4 weeks"
+speed = "Setup 5 min iterate 10 min"
+cost = "Tokens saved 6000+ per project"

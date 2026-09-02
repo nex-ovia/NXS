@@ -1,47 +1,40 @@
-# ==============================================================================
-# NXS Universal Manifest Schema v1.0
-# Purpose: Structural specification for ANY project, outcome, agent, or setup
-# Scope: Software projects, business outcomes, agent configurations, deployments
-# ==============================================================================
-
 [nxs]
-version = "1.0.0"
-description = "Universal specification for resilient, reusable, autonomous, fast delivery"
+version = "2.0"
+name = "Nexovia Standard"
+description = "Delivery standard for resilient, reusable, autonomous, fast solutions"
+core_statement = "Good solutions are built once, reused many times, extended without friction, and maintained without becoming a burden."
 
-# ==============================================================================
-# PART 1: DECLARATION GATE (What problem are we solving?)
-# ==============================================================================
-[declaration]
-problem = "What problem does this solve?"
-scope_in = ["What is included?"]
-scope_out = ["What is explicitly excluded?"]
-success_criteria = "How will we know it is done?"
-dependencies_preliminary = ["What external things do we need?"]
-
-# ==============================================================================
-# PART 2: THE FOUR OUTCOMES (Why we are doing this)
-# ==============================================================================
-[outcomes]
+[references]
+readme = "README.md"
+install_guide = "INSTALL.md"
+getting_started = "GETTING_STARTED.md"
+skill_config = "skill.toml"
+governance_config = "governance.toml"
+manifest_template = "MANIFEST-SPEC.md"
 
 [outcomes.resilience]
+id = "resilience"
 goal = "Project survives without original builder"
 metric = "handoff_time_minutes"
 target = 120
 test = "Someone else runs this from instructions alone"
 
 [outcomes.reusability]
+id = "reusability"
 goal = "Same logic works across multiple contexts unchanged"
 metric = "contexts_deployed"
 target = 5
 test = "Deploy to 2+ new projects without modification"
 
 [outcomes.ownership]
+id = "ownership"
 goal = "Never locked into any specific tool"
 metric = "tool_swap_time_minutes"
 target = 240
 test = "Swap underlying tool, logic unchanged"
 
 [outcomes.speed]
+id = "speed"
 goal = "Ship faster, iterate faster"
 metric_setup = "setup_time_minutes"
 target_setup = 5
@@ -49,275 +42,209 @@ metric_iterate = "iteration_time_minutes"
 target_iterate = 10
 test = "Setup in one command, iterate without rebuilding"
 
-# ==============================================================================
-# PART 3: NODES (What are the components?)
-# Every component must be explicit and map to outcomes
-# ==============================================================================
-
-[[nodes]]
-id = "example_code"
-name = "Example Code Component"
-type = "code"
-layer = "execution"
-outcomes = ["resilience", "reusability"]
-runtime = "python-3.11"
-path = "src/core/logic.py"
-criticality = "high"
-dependencies = []
-
-[[nodes]]
-id = "example_agent"
-name = "Example Agent Component"
-type = "agent"
-layer = "orchestration"
-outcomes = ["ownership", "speed"]
-runtime = "llm"
-path = "agents/config.toml"
-criticality = "medium"
-dependencies = []
-
-# ==============================================================================
-# PART 4: THE FOUR RULES (How we build)
-# ==============================================================================
-[rules]
-
-[rules.rule_1]
+[[rules]]
+id = "rule_1"
 name = "Logic Separate from Tools"
-applies_to = ["code", "agent", "business_process"]
-requirement = "Core logic must not know or care what tool implements it"
+description = "Core business logic must not know or depend on any tool"
 validation = "Can core logic be tested in isolation?"
 
-[rules.rule_2]
+[[rules]]
+id = "rule_2"
 name = "Configuration Never Hardcoded"
-applies_to = ["code", "config", "agent", "business_process"]
-requirement = "Every value that changes lives outside the component"
+description = "Every value that changes lives in external configuration"
 validation = "Are all non-code values in external configuration?"
 
-[rules.rule_3]
-name = "Dependencies Visible"
-applies_to = ["all"]
-requirement = "Every dependency is explicit with version and reason"
+[[rules]]
+id = "rule_3"
+name = "Every Dependency Visible"
+description = "Every dependency is explicit with version and reason"
 validation = "Can someone list all dependencies without guessing?"
 
-[rules.rule_4]
-name = "Runs Anywhere"
-applies_to = ["code", "agent", "business_process"]
-requirement = "Setup is automated; same on local, CI, production"
+[[rules]]
+id = "rule_4"
+name = "Runs Anywhere, for Anyone"
+description = "Setup is automated same on local, CI, production"
 validation = "Does setup work with one command?"
 
-# ==============================================================================
-# PART 5: INTEGRITY GATE (Is structure correct?)
-# ==============================================================================
-[integrity]
-checks = [
-  "Every node is accounted for",
-  "Every node maps to at least one outcome",
-  "Every node specifies runtime and path",
-  "No node has circular dependencies",
-  "Declaration gate completed for entire project",
-  "Structure matches Declaration",
-  "All dependencies documented with versions",
-  "Setup automation works without human help"
-]
+[[gates]]
+id = "gate_1"
+name = "Declaration"
+phase = "before_coding"
+duration_minutes = 30
+description = "Write down problem, scope, done criteria, dependencies"
+required_fields = 9
 
-# ==============================================================================
-# PART 6: SOVEREIGNTY GATE (Are we locked in?)
-# ==============================================================================
-[sovereignty]
-checks = [
-  "Could we swap this nodes runtime in less than 4 hours?",
-  "Does the logic exist independent of the tool?",
-  "Could we move this project to a different host or cloud?",
-  "Is operational clarity documented?",
-  "Has handoff been tested with someone other than the builder?",
-  "Are all four outcomes being measured and tracked?",
-  "Could a new person understand this without the original author?"
-]
+[[gates]]
+id = "gate_2"
+name = "Integrity"
+phase = "before_shipping"
+duration_minutes = 60
+description = "Verify structure matches plan, dependencies declared, setup works"
+automated_checks = 9
 
-# ==============================================================================
-# PART 7: UNIVERSAL NODE TYPES (What can this project contain?)
-# ==============================================================================
-[node_types]
+[[gates]]
+id = "gate_3"
+name = "Sovereignty"
+phase = "before_production"
+duration_minutes = 45
+description = "Confirm no lock-in, operational clarity, handoff tested"
+real_world_checks = 8
 
-[node_types.code]
+[[policies]]
+id = "policy_1"
+name = "Outcome Traceability"
+description = "Every component maps to at least one outcome"
+violation = "Component has no outcome mapping"
+fix = "Map to Resilience/Reusability/Ownership/Speed"
+
+[[policies]]
+id = "policy_2"
+name = "Dependency Documentation"
+description = "All dependencies listed with why and fallback strategy"
+violation = "Missing DEPENDENCIES.md"
+fix = "Create file with name, why, fallback, swap strategy"
+
+[[policies]]
+id = "policy_3"
+name = "Configuration Management"
+description = "Zero hardcoded secrets or values"
+violation = "db_password in code"
+fix = "Use environment variable"
+
+[[policies]]
+id = "policy_4"
+name = "Setup Automation"
+description = "One command, no manual steps"
+violation = "Run these 5 manual commands"
+fix = "Create setup.sh that does all 5 automatically"
+
+[[policies]]
+id = "policy_5"
+name = "Error Handling"
+description = "Explicit, not silent"
+violation = "Silent failure try except pass"
+fix = "Log error with context and remediation"
+
+[[policies]]
+id = "policy_6"
+name = "Handoff Documentation"
+description = "RUNBOOK.md tested with real person"
+violation = "RUNBOOK.md does not exist"
+fix = "Write step-by-step, test with real person"
+
+[[policies]]
+id = "policy_7"
+name = "Security Baseline"
+description = "No secrets in code or repository"
+violation = "API key in .env committed to GitHub"
+fix = "Add .env to .gitignore, commit .env.example"
+
+[[policies]]
+id = "policy_8"
+name = "Testing Requirements"
+description = "Core logic coverage >= 70%"
+violation = "Core logic has 0 tests"
+fix = "Add unit tests, achieve 70+ coverage"
+
+[[node_types]]
+id = "code"
 description = "Executable software logic"
 examples = ["API server", "worker", "CLI tool", "library"]
 outcomes = ["resilience", "reusability", "ownership", "speed"]
 
-[node_types.agent]
-description = "Autonomous actor (LLM, decision engine, coordinator)"
-examples = ["Claude-based task handler", "scheduler", "router", "negotiator"]
+[[node_types]]
+id = "agent"
+description = "Autonomous actor (LLM, decision engine)"
+examples = ["Claude-based handler", "scheduler", "router"]
 outcomes = ["reusability", "ownership", "speed"]
 
-[node_types.config]
+[[node_types]]
+id = "config"
 description = "External configuration (not in code)"
-examples = ["environment variables", "TOML files", "database connection strings"]
+examples = ["environment variables", "TOML files"]
 outcomes = ["ownership", "speed"]
 
-[node_types.data]
-description = "Persistent state (database, file storage, cache)"
+[[node_types]]
+id = "data"
+description = "Persistent state (database, cache)"
 examples = ["PostgreSQL table", "S3 bucket", "Redis cache"]
 outcomes = ["resilience", "reusability"]
 
-[node_types.decision]
+[[node_types]]
+id = "decision"
 description = "Business decision or policy"
-examples = ["approval criteria", "routing logic", "escalation rule"]
+examples = ["approval criteria", "routing logic"]
 outcomes = ["ownership", "resilience"]
 
-[node_types.business_process]
+[[node_types]]
+id = "business_process"
 description = "Workflow involving people and systems"
-examples = ["onboarding flow", "incident response", "deployment procedure"]
+examples = ["onboarding flow", "incident response"]
 outcomes = ["resilience", "speed"]
 
-[node_types.documentation]
+[[node_types]]
+id = "documentation"
 description = "Runbooks, architecture, decision logs"
 examples = ["RUNBOOK.md", "DECISIONS.md", "API.md"]
 outcomes = ["resilience"]
 
-[node_types.manual_step]
+[[node_types]]
+id = "manual_step"
 description = "Something a human does"
 examples = ["code review", "testing", "approval"]
 outcomes = ["resilience"]
 
-# ==============================================================================
-# PART 8: UNIVERSAL RUNTIMES (How does each node execute?)
-# ==============================================================================
 [runtimes]
-
 code_python = "Python 3.11 or 3.12"
 code_rust = "Rust 2024 edition"
 code_node = "Node.js 20 or 22"
-agent_llm = "Large Language Model"
-agent_local = "Local LLM via Ollama"
+agent_llm = "Claude, GPT, any LLM"
+agent_ollama = "Local LLM via Ollama"
 agent_remote = "External API or service"
 execute_docker = "Docker container"
 execute_lambda = "AWS Lambda"
 execute_cloud_run = "Google Cloud Run"
-execute_human = "Requires human decision"
+execute_human = "Human decision"
 execute_workflow = "Workflow orchestrator"
 execute_cron = "Scheduled job"
 storage_file = "File in repository"
 storage_env = "Environment variable"
-storage_database = "Database or data store"
 
-# ==============================================================================
-# PART 9: VALIDATION CHECKLIST
-# ==============================================================================
-[validation]
+[[definition_of_done]]
+box = 1
+item = "Logic works in isolation (no tool dependencies)"
 
-every_node = [
-  "id",
-  "name",
-  "type",
-  "layer",
-  "runtime",
-  "path",
-  "criticality",
-  "outcomes"
-]
+[[definition_of_done]]
+box = 2
+item = "Configuration is external and documented"
 
-project_must_have = [
-  "Declaration gate completed",
-  "At least one node per outcome",
-  "Integrity gate passed",
-  "Sovereignty gate passed",
-  "README.md",
-  "Setup automation",
-  "Dependencies documented"
-]
+[[definition_of_done]]
+box = 3
+item = "All dependencies explicit with versions and reasons"
 
-before_shipping = [
-  "All seven Definition of Done boxes checked",
-  "Sovereignty gate verified",
-  "Handoff tested with real person",
-  "All four outcomes measurable",
-  "No circular dependencies",
-  "No unknown node types"
-]
+[[definition_of_done]]
+box = 4
+item = "Setup is automated (one command)"
 
-# ==============================================================================
-# PART 10: SCHEMA INTERPRETATION
-# ==============================================================================
-[interpretation]
+[[definition_of_done]]
+box = 5
+item = "Runs same way locally and in production"
 
-layers = [
-  "declaration = Planning and goal setting",
-  "governance = Policies and standards enforcement",
-  "execution = Business and domain logic",
-  "persistence = Data storage and state",
-  "orchestration = Coordination and routing",
-  "integration = External service connections",
-  "surface = User-facing APIs and interfaces"
-]
+[[definition_of_done]]
+box = 6
+item = "Understandable without original author"
 
-criticality_means = [
-  "high = If this fails, the project fails",
-  "medium = If this fails, users notice issues",
-  "low = If this fails, nice-to-have features break"
-]
+[[definition_of_done]]
+box = 7
+item = "Handoff tested with real person"
 
-outcome_focus = [
-  "resilience = Can someone else run this?",
-  "reusability = Can this work elsewhere unchanged?",
-  "ownership = Are we locked into specific tools?",
-  "speed = How fast can we ship and iterate?"
-]
+[agent_instructions]
+primary_action = "Reference this schema first"
+then_load = "Load only sections needed from governance.toml and skill.toml"
+never_load_entire = "Do NOT load full SKILL.md or GOVERNANCE.md files"
+token_savings = "Approach saves 6000+ tokens per project"
 
-# ==============================================================================
-# PART 11: HOW TO EXTEND SCHEMA FOR NEW TOOLS
-# ==============================================================================
-[extensions]
-
-[extensions.adding_runtime]
-instruction = "When a new agent framework or runtime emerges (e.g., OpenClaw)"
-example_openclaw = """
-# Add to [runtimes]:
-agent_openclaw = "OpenClaw framework v1.0+"
-"""
-where_to_add = "Under [runtimes] section"
-then_commit = "git commit -m 'feat: Add OpenClaw runtime support'"
-then_tag_release = "git tag v2.1.0"
-
-[extensions.adding_node_type]
-instruction = "When you need a new type of component not in the 8 types"
-example_quantum = """
-[node_types.quantum]
-description = "Quantum algorithm or process"
-examples = ["quantum_search", "quantum_factoring"]
-outcomes = ["speed", "resilience"]
-"""
-where_to_add = "Under [node_types] section"
-then_commit = "git commit -m 'feat: Add quantum node type'"
-then_tag_release = "git tag v2.1.0"
-
-[extensions.adding_layer]
-instruction = "When you need to describe system layers differently"
-example_add_layer = """
-# In [interpretation.layers], add:
-"quantum_processing = Quantum computation layer"
-"""
-where_to_add = "Under [interpretation.layers] array"
-then_commit = "git commit -m 'docs: Add quantum_processing layer'"
-then_tag_release = "git tag v2.0.1"
-
-[extensions.versioning_rules]
-rule_1 = "Schema changes go in TOML, commit to GitHub"
-rule_2 = "Tag semantic version: MAJOR.MINOR.PATCH"
-rule_3 = "PATCH (2.0.1): Bug fixes, documentation → Auto-detect"
-rule_4 = "MINOR (2.1.0): New features (runtime, policy, node type) → Ask to upgrade"
-rule_5 = "MAJOR (3.0.0): Core concept changes (outcomes/rules) → Manual migration"
-
-[extensions.backward_compatibility]
-promise = "v2.x always accepts v1.x manifests"
-meaning = "A v1.0 project built before agents existed still runs on v2.0"
-example = "If you built in v2.0, it runs unchanged on v2.1 and v2.10"
-breaking_change = "v3.0 would break v2.x (rare, only if core concepts change)"
-
-# ==============================================================================
-# PART 12: SCHEMA VERSION HISTORY
-# ==============================================================================
-[version_history]
-v1_0 = "Initial NXS specification (software projects only)"
-v2_0 = "Universal standard (software + business + agents)"
-v2_1 = "Future: New runtimes, new node types, new policies"
-v3_0 = "Future: Core concept changes (major rework)"
+[versioning]
+version = "2.0.0"
+backward_compatible = true
+minimum_agent = "Any agent that reads TOML"

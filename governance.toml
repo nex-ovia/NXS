@@ -1,0 +1,227 @@
+[gate_1_declaration]
+id = "gate_1"
+name = "Declaration"
+phase = "before_coding"
+description = "Interactive collection of project intent before code starts"
+
+[gate_1_declaration.field_1]
+name = "Goal"
+required = true
+type = "text"
+help = "What problem are we solving?"
+
+[gate_1_declaration.field_2]
+name = "Success Metrics"
+required = true
+type = "text"
+help = "How will we know it worked?"
+
+[gate_1_declaration.field_3]
+name = "Scope Boundary"
+required = true
+type = "text"
+help = "What is IN scope, what is OUT?"
+
+[gate_1_declaration.field_4]
+name = "Dependencies"
+required = true
+type = "text"
+help = "List every external system or service"
+
+[gate_1_declaration.field_5]
+name = "Timeline"
+required = true
+type = "text"
+help = "When does it need to ship?"
+
+[gate_1_declaration.field_6]
+name = "Known Risks"
+required = true
+type = "text"
+help = "What could go wrong?"
+
+[gate_1_declaration.field_7]
+name = "Stakeholders"
+required = true
+type = "text"
+help = "Who needs to approve or know?"
+
+[gate_1_declaration.field_8]
+name = "Assumptions"
+required = true
+type = "text"
+help = "What are we assuming to be true?"
+
+[gate_1_declaration.field_9]
+name = "Constraints"
+required = true
+type = "text"
+help = "What are we NOT allowed to do?"
+
+[gate_1_declaration.approval]
+required = true
+method = "interactive_html_form"
+user_action = "Click APPROVE before code starts"
+
+[[gate_2_integrity_checks]]
+check_id = 1
+name = "No Secrets in Code"
+automation = "grep password api_key secret"
+failure_sop = "Remove secrets use environment variables"
+
+[[gate_2_integrity_checks]]
+check_id = 2
+name = "All Dependencies Declared"
+automation = "verify DEPENDENCIES.md exists"
+failure_sop = "Create DEPENDENCIES.md"
+
+[[gate_2_integrity_checks]]
+check_id = 3
+name = "Setup Automation Exists"
+automation = "verify setup.sh runs without error"
+failure_sop = "Create setup.sh"
+
+[[gate_2_integrity_checks]]
+check_id = 4
+name = "Core Tests Pass"
+automation = "pytest tests core with 70 percent coverage"
+failure_sop = "Add or fix tests to 70 percent coverage"
+
+[[gate_2_integrity_checks]]
+check_id = 5
+name = "Integration Tests Pass"
+automation = "pytest tests integration"
+failure_sop = "Fix failing integration tests"
+
+[[gate_2_integrity_checks]]
+check_id = 6
+name = "Handoff Runbook Exists"
+automation = "verify RUNBOOK.md exists"
+failure_sop = "Create RUNBOOK.md test with person"
+
+[[gate_2_integrity_checks]]
+check_id = 7
+name = "Schema Validation"
+automation = "validate against nxs_schema.toml"
+failure_sop = "Update manifest to match schema"
+
+[[gate_2_integrity_checks]]
+check_id = 8
+name = "Manifest Present"
+automation = "verify nxs-manifest.toml exists"
+failure_sop = "Create nxs-manifest.toml"
+
+[[gate_2_integrity_checks]]
+check_id = 9
+name = "No Hardcoded Values"
+automation = "grep localhost 127.0.0.1 hardcoded"
+failure_sop = "Extract to configuration"
+
+[[gate_3_sovereignty_checks]]
+check_id = 1
+name = "Tool Swap Under 4 Hours"
+test = "Can we replace database or framework in 4 hours?"
+failure_sop = "Reduce coupling add abstraction"
+
+[[gate_3_sovereignty_checks]]
+check_id = 2
+name = "Data Portable"
+test = "Can we export all data in standard format?"
+failure_sop = "Ensure JSON or CSV export"
+
+[[gate_3_sovereignty_checks]]
+check_id = 3
+name = "No Vendor Lock-in"
+test = "No cloud-specific APIs in core logic?"
+failure_sop = "Separate vendor code into adapters"
+
+[[gate_3_sovereignty_checks]]
+check_id = 4
+name = "Metrics Wired"
+test = "Logs metrics traces configured?"
+failure_sop = "Add logging metrics support"
+
+[[gate_3_sovereignty_checks]]
+check_id = 5
+name = "Handoff Tested with Real Person"
+test = "Did person follow RUNBOOK.md and succeed?"
+failure_sop = "Update RUNBOOK.md test again"
+
+[[gate_3_sovereignty_checks]]
+check_id = 6
+name = "No Person Dependency"
+test = "No only_person_knows components?"
+failure_sop = "Document tribal knowledge"
+
+[[gate_3_sovereignty_checks]]
+check_id = 7
+name = "Version Controlled"
+test = "Git history clean no secrets?"
+failure_sop = "Clean git history add messages"
+
+[[gate_3_sovereignty_checks]]
+check_id = 8
+name = "Documented"
+test = "README RUNBOOK DECISIONS API exist?"
+failure_sop = "Write missing documentation"
+
+[policy_1]
+id = "policy_1"
+name = "Outcome Traceability"
+description = "Every component maps to at least one outcome"
+violation = "Component has no outcome mapping"
+fix = "Add comment OUTCOME resilience reusability ownership speed"
+
+[policy_2]
+id = "policy_2"
+name = "Dependency Documentation"
+description = "All dependencies listed with why and fallback"
+violation = "DEPENDENCIES.md missing"
+fix = "Create DEPENDENCIES.md with all deps"
+
+[policy_3]
+id = "policy_3"
+name = "Configuration Management"
+description = "Zero hardcoded secrets"
+violation = "password in code"
+fix = "Use environment variables"
+
+[policy_4]
+id = "policy_4"
+name = "Setup Automation"
+description = "One command no manual steps"
+violation = "Run these 5 manual commands"
+fix = "Create setup.sh"
+
+[policy_5]
+id = "policy_5"
+name = "Error Handling"
+description = "Explicit errors never silent"
+violation = "except pass"
+fix = "Log error with context"
+
+[policy_6]
+id = "policy_6"
+name = "Handoff Documentation"
+description = "RUNBOOK.md tested with real person"
+violation = "RUNBOOK.md missing"
+fix = "Create and test with real person"
+
+[policy_7]
+id = "policy_7"
+name = "Security Baseline"
+description = "No secrets in code or repo"
+violation = "API key in .env committed"
+fix = "Add to .gitignore use env vars"
+
+[policy_8]
+id = "policy_8"
+name = "Testing Requirements"
+description = "Core logic coverage >= 70 percent"
+violation = "Core logic has 0 tests"
+fix = "Add tests achieve 70+ coverage"
+
+[enforcement]
+all_gates = "PASS PASS PASS"
+required_before = "coding shipping production"
+allowed_exceptions = "None gates are binary"
